@@ -1,4 +1,5 @@
 import CustomUtils.Time;
+import com.sun.corba.se.impl.oa.toa.TOA;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
@@ -38,10 +39,13 @@ import static org.lwjgl.opengl.GL11.glGetInteger;
 public class TilemapEditor {
     @SuppressWarnings("FieldCanBeLocal")
     private static String tool = "pen";
+    public static boolean outDoorSel = false;
     public static boolean isFullScreen=false;
     //screen width and height controlling variables.
     private static final int W = 1100;
     private static final int H = 740;
+
+    private static boolean doorCrComp = true;
 
     private static int cL = 1;
 
@@ -52,12 +56,17 @@ public class TilemapEditor {
 
     private static boolean hasName = false;
 
+    private static char curDoorChar = (char)9000000;
     private static GLtile curSel;
     private static GLtile[][][] grid = new GLtile[3][640/32][800/32];
     private static ArrayList<GLtile> tiles = new ArrayList<>();
     public static ArrayList<GLtile> enemies = new ArrayList<>();
     public static ArrayList<GLpic> pics = new ArrayList<>();
     public static ArrayList<String> names = new ArrayList<>();
+    //will load from paths.dor
+    public static ArrayList<String> dWrite = new ArrayList<>();
+    public static char tempChar = (char)9000+1; // OVER 9000
+    public static int dA = 0;
 
     //currently variables to save player position to be removed later.
     public static int x = 200;
@@ -92,9 +101,16 @@ public class TilemapEditor {
 
     private static Time udE=new Time();
 
+    private static Time saveDelay=new Time();
+
+    private static Time dpDelay=new Time();
+
     private static ArrayList<GLinput> inputs = new ArrayList<>();
 
     public static double dt;
+
+    public static GLtile[][][] tempMap = new GLtile[3][640/32][800/32];
+    public static String tempName = "";
     /**
      * start() initializes the GL and then renders, updates, and takes input.
      * Usually this is where you would put anything you would want to happen every tick.
@@ -107,6 +123,7 @@ public class TilemapEditor {
         //out.print("Enter level num: ");
         //name = new Scanner(in).nextLine();
 
+        SET_TILES();
         initGL(W,H);
         init();
 
@@ -124,7 +141,6 @@ public class TilemapEditor {
                 Display.destroy();
                 System.exit(0);
             }
-
         }
     }
 
@@ -146,7 +162,7 @@ public class TilemapEditor {
             //Texture texture = TextureLoader.getTexture("PNG",new FileInputStream("src\\Assets\\ico16.png"));
             //Texture texture1 = TextureLoader.getTexture("PNG",new FileInputStream("src\\Assets\\ico32.png"));
             //ByteBuffer[] icons = new ByteBuffer[4];
- 
+
             //icons[0] = createIco(16,16,true,false,texture);
             //icons[1] = createIco(32,32,false,false,texture1);
             //icons[3] = createIco(128,128,true,true,texture1);
@@ -198,7 +214,7 @@ public class TilemapEditor {
     }
 
     public static ByteBuffer createIco(int width,int height,boolean fixAlphas,boolean makeBlackTransparent,Texture texture) {
-    
+
         int drawBuffer = glGetInteger(GL11.GL_DRAW_BUFFER);
     //Draw & stretch a width by height icon onto the back buffer
     glDrawBuffer(GL11.GL_BACK);
@@ -209,7 +225,7 @@ public class TilemapEditor {
       GL11.glTexCoord2f(1,1); GL11.glVertex2f(width,height);
       GL11.glTexCoord2f(0,1); GL11.glVertex2f(0,height);
     GL11.glEnd();
- 
+
     //Read the back buffer into the byte buffer icon
     GL11.glReadBuffer(GL11.GL_BACK);
     ByteBuffer icon = BufferUtils.createByteBuffer(width * height * 4);
@@ -223,7 +239,7 @@ public class TilemapEditor {
           int red   = icon.get(color);
           int green = icon.get(color + 1);
           int blue  = icon.get(color + 2);
- 
+
           if(makeBlackTransparent && red == 0 && green == 0 && blue == 0) {
             icon.put(color + 3,(byte)0);
             } else if(fixAlphas) {
@@ -352,11 +368,13 @@ public class TilemapEditor {
      * @throws FileNotFoundException if a file not found exception occurs during GLimage creation.
      */
     public static void init() throws CustomUtils.AudioControllerException, IOException{
-        SET_TILES();
+
         try {
             if(hasName)
             {
                 createImage("mainBack.png",0,0);
+                saveDelay.start();
+                dpDelay.start();
             }
             else
             {
@@ -381,14 +399,14 @@ public class TilemapEditor {
 
                         if(e==1)
                         {
-                            GLtile t = new GLtile("tl-default.png",w*32+50,q*32+50,(char)128,(char)128);
+                            GLtile t = new GLtile("tl-default.png",w*32+50,q*32+50,(char)10000000,'*');
                             t.tag = "def";
                             t.layer = e;
                             grid[e-1][q][w] =t;
                             String r = "invisible.png";
                             createButton(r,r,r,w*32+50,q*32+50,"-+-:"+w+":"+q);
                         }else{
-                            GLtile t = new GLtile("invisible.png",w*32+50,q*32+50,(char)128,(char)128);
+                            GLtile t = new GLtile("invisible.png",w*32+50,q*32+50,(char)10000000,'*');
                             t.tag = "def";
                             t.layer = e;
                             grid[e-1][q][w] =t;
@@ -427,7 +445,7 @@ public class TilemapEditor {
             int i = 0;
             for(String a:names)
             {
-                createTile(a.substring(3),-100,-100,(char)(tiles.size()+33),'*');
+                createTile(a.substring(3),-100,-100,(char)(tiles.size()+1000),'*');
                 if(a.startsWith("tl--"))
                 {
                     cur_b = createButton(a,a,a,p1,p2,a);
@@ -474,8 +492,41 @@ public class TilemapEditor {
 
     private static void SET_TILES() throws IOException
     {
-        //createTile("dirt.png",0,0,'d','*');
-        //reateTile("grass.png",0,0,'g','*');
+        //open doors.txt
+        String path = "src\\Assets\\Scenes\\";
+        Scanner temp = new Scanner(new FileReader(path+"doors.txt"));
+        while(temp.hasNextLine())
+        {
+            String s = temp.nextLine();
+            Tools.bp("existing door: "+s);
+            dA++;
+        }
+
+    }
+
+    private static GLtile[][][] clnGLtile(GLtile[][][] a)
+    {
+        GLtile[][][] ret = new GLtile[a.length][a[0].length][a[0][0].length];
+        int x = 0;
+        int y = 0;
+        int z = 0;
+        for(GLtile[][] gr :grid)
+        {
+            for(GLtile[] b : gr)
+            {
+                for(GLtile l : b)
+                {
+                    ret[z][y][x] = a[z][y][x];
+                    x++;
+                }
+                y++;
+                x=0;
+            }
+            z++;
+            y=0;
+        }
+        return ret;
+
     }
 
     /**
@@ -489,16 +540,30 @@ public class TilemapEditor {
         {
             if(doorInput.getEntry()!=null)
             {
+                String entry = doorInput.getEntry();
+                //Tools.p(doorInput.getEntry());
                 GLtile d = curSel;
-                GLtile q = new GLtile("tl-"+d.tag,xyzDoor[0]*32+50,xyzDoor[1]*32+50,d.sm,d.tp);
+                curDoorChar = (char)(1000000+dWrite.size()+dA);
+                GLtile q = new GLtile("tl-"+d.tag,xyzDoor[0]*32+50,xyzDoor[1]*32+50,curDoorChar,d.tp);
+                //Tools.bp("door initialized with char: "+q.sm+" from "+dA);
                 q.spread = curSel.spread;
                 q.layer = cL;
+                tempChar = d.sm;
                 grid[xyzDoor[2]][xyzDoor[1]][xyzDoor[0]] = q;
-                grid[xyzDoor[2]][xyzDoor[1]][xyzDoor[0]].command =doorInput.getEntry();
+                grid[xyzDoor[2]][xyzDoor[1]][xyzDoor[0]].command =entry;
+                // x,y,z,levelname
+                //dWrite.add(""+xyzDoor[0]+","+xyzDoor[1]+","+xyzDoor[2]+","+entry+","+name);
+                //Tools.p(dWrite);
+                tempMap = clnGLtile(grid);
+                tempName = entry;
+                LOAD(entry);
                 doorInput = null;
-                //Tools.p(curSel.command);
+                outDoorSel = true;
+
             }
+
         }
+
         if(hasName)
         {
             if(udE.getTime()>1000)
@@ -554,9 +619,13 @@ public class TilemapEditor {
                     if(a.tag.startsWith("-+-:"))
                     {
                         //Tools.p(curSel.sm);
-                        if(curSel.tp=='@'&&doorInput==null)
+                        if(curSel.tp=='@'&&doorInput==null&&!outDoorSel&&dpDelay.getTime()>1000)
                         {
-                            doorInput = createInput("ummok",W/2-90,H/2-32,"aa");
+                            for(int i = inputs.size()-1; i>=0; i--)
+                            {
+                                inputs.remove(i);
+                            }
+                            doorInput = createInput("whiteBack.png", W/2-90,H/2-25,"dipt");
                             doorInput.sel = true;
                             String[] k = a.tag.split(":");
                             int gx = Integer.parseInt(k[1]);
@@ -564,8 +633,10 @@ public class TilemapEditor {
                             xyzDoor[0] = gx;
                             xyzDoor[1] = gy;
                             xyzDoor[2] = cL;
+                            dpDelay.clear();
+                            dpDelay.start();
                         }
-                        else
+                        else if(!outDoorSel)
                         {
                             String[] k = a.tag.split(":");
                             int gx = Integer.parseInt(k[1]);
@@ -576,7 +647,67 @@ public class TilemapEditor {
                             q.layer = cL;
                             grid[cL][gy][gx] = q;
                         }
-
+                        else if(outDoorSel&&dpDelay.getTime()>1000)
+                        {
+                            String path = "src\\Assets\\Scenes\\";
+                            PrintWriter out;
+                            PrintWriter out2;
+                            int move = 0;
+                            int i = 1;
+                            String[] k = a.tag.split(":");
+                            int gx = Integer.parseInt(k[1]);
+                            int gy = Integer.parseInt(k[2]);
+                            GLtile d = curSel;
+                            GLtile q = new GLtile("tl-"+d.tag,gx*32+50,gy*32+50,curDoorChar,d.tp);
+                            String write = ""+
+                                    curDoorChar+","+
+                                    d.sm+","+
+                                    tempChar+","+
+                                    gx+","+
+                                    xyzDoor[0]+","+
+                                    gy+","+
+                                    xyzDoor[1]+","+
+                                    cL+","+
+                                    xyzDoor[2]+","+
+                                    tempName+","+
+                                    name;
+                            dWrite.add(write);
+                            q.spread = curSel.spread;
+                            q.layer = cL;
+                            q.sm=curDoorChar;
+                            grid[cL][gy][gx] = q;
+                            Tools.bp(grid[cL][gy][gx].sm);
+                            Tools.bp("========================================================");
+                            for(GLtile[][] gr : grid)
+                            {
+                                out = new PrintWriter(path+tempName+"_"+move+".map","UTF-8");
+                                out2 = new PrintWriter(path+tempName+"_"+move+".col","UTF-8");
+                                for(GLtile[] e : gr)
+                                {
+                                    i = 1;
+                                    for(GLtile b : e)
+                                    {
+                                        out.print(""+b.sm);
+                                        Tools.p("wrote "+b.sm+" to "+path+tempName+"_"+move+".map\t\t\t["+i+"/"+e.length+"]");
+                                        out2.print(""+b.tp);
+                                        Tools.p("wrote "+b.tp+" to "+path+tempName+"_"+move+".col\t\t\t["+i+"/"+e.length+"]");
+                                        i++;
+                                    }
+                                    out.println();
+                                    out2.println();
+                                }
+                                out.close();
+                                Tools.p("Finihed writing "+path+tempName+".map");
+                                out2.close();
+                                Tools.p("Finihed writing "+path+tempName+".col");
+                                move++;
+                            }
+                            Tools.bp("========================================================");
+                            grid = tempMap;
+                            outDoorSel = false;
+                            dpDelay.clear();
+                            dpDelay.start();
+                        }
                     }
                     if(a.tag.startsWith("+++"))
                     {
@@ -614,12 +745,20 @@ public class TilemapEditor {
                     }
                     if(a.tag.startsWith("[save]"))
                     {
-                        SAVE();
+                        if(saveDelay.getTime()>1000)
+                        {
+                            Tools.p("=========== SAVE INITIALIZED ===========");
+                            SAVE();
+                            Tools.p("============ SAVE FINALIZED ============");
+                            saveDelay.clear();
+                            saveDelay.start();
+                        }
+
                     }
                     if(a.tag.startsWith("[load]"))
                     {
                         try{
-                            LOAD();
+                            LOAD(name);
                         } catch (java.io.IOException ignored) {}
                     }
                     if(a.tag.startsWith("[new]"))
@@ -635,10 +774,10 @@ public class TilemapEditor {
                                 {
                                     if(e==1)
                                       {
-                                        grid[e-1][q][w] = new GLtile("tl-default.png", w * 32 + 50, q * 32 + 50, (char) 1, (char) 1);
+                                        grid[e-1][q][w] = new GLtile("tl-default.png", w * 32 + 50, q * 32 + 50, (char) 10000000, '*');
                                     }
                                     else{
-                                        grid[e-1][q][w] = new GLtile("invisible.png", w * 32 + 50, q * 32 + 50, (char) 1, (char) 1);
+                                        grid[e-1][q][w] = new GLtile("invisible.png", w * 32 + 50, q * 32 + 50, (char) 10000000, '*');
                                     }
                                     w++;
                                 }
@@ -698,78 +837,163 @@ public class TilemapEditor {
         }
     }
 
-    private static void SAVE() throws FileNotFoundException, UnsupportedEncodingException {
+    private static void addWrite(String file, String s) throws IOException
+    {
+        ArrayList<String> save = new ArrayList<>();
+        Scanner in = new Scanner(new FileReader(file));
+        while(in.hasNextLine())
+        {
+            save.add(in.nextLine());
+        }
+        PrintWriter out = new PrintWriter(file,"UTF-8");
+        for(int i = 0; i < save.size(); i++)
+        {
+            out.println(save.get(i));
+        }
+        out.println(s);
+    }
+
+    private static void SAVE() throws FileNotFoundException, UnsupportedEncodingException, IOException {
         //Tools.p("Saving ...");
+
+
         String path = "src\\Assets\\Scenes\\";
-        PrintWriter out = new PrintWriter(path+name+".map","UTF-8");
-        PrintWriter out2 = new PrintWriter(path+name+".col","UTF-8");
-        //Tools.p("Writing header ...");
+        PrintWriter out;
+        PrintWriter out2;
+        String curWrite = "";
+        PrintWriter out3 = new PrintWriter(path+"doors.txt","UTF-8");
+        Tools.p("Doors:");
+        Tools.bp(dWrite+"[][]");
         int move = 0;
-        //out.println();
-        //Tools.p("Writing content ...");
+        for(String add: dWrite)
+        {
+            out3.println(add);
+        }
+        out3.close();
+        Tools.p("finished writing doors");
+        int i = 0;
         for(GLtile[][] gr : grid)
         {
             out = new PrintWriter(path+name+"_"+move+".map","UTF-8");
             out2 = new PrintWriter(path+name+"_"+move+".col","UTF-8");
             for(GLtile[] a : gr)
             {
+                i = 1;
                 for(GLtile b : a)
                 {
                     out.print(""+b.sm);
+                    Tools.p("wrote "+b.sm+" to "+path+name+"_"+move+".map\t\t\t["+i+"/"+a.length+"]");
                     out2.print(""+b.tp);
+                    Tools.p("wrote "+b.tp+" to "+path+name+"_"+move+".col\t\t\t["+i+"/"+a.length+"]");
+                    i++;
                 }
                 out.println();
                 out2.println();
             }
-            //Tools.p("Saved.");
-            //Tools.p("-> "+path+name);
             out.close();
+            Tools.p("Finihed writing "+path+name+".map");
             out2.close();
+            Tools.p("Finihed writing "+path+name+".col");
             move++;
         }
 
     }
 
-    private static void LOAD() throws IOException {
-        String path = "src\\Assets\\Scenes\\";
-        Scanner in = new Scanner(new FileReader(path+name+".map"));
-        Scanner in2 = new Scanner(new FileReader(path+name+".col"));
-        //[ed] end of header object
-        //[cv] divisor between char and name of header obj
-        //[sp] divisor between grids (this one is just in case a char get out of hand)
-        //String header = in.nextLine();
-        int move = 0;
+    private static void LOAD(String name) throws IOException {
+        Tools.enablePrinting();
         int q = 0;
         int w = 0;
+        int z = 0;
+        Tools.p("loading grid");
         for(GLtile[][] gr : grid)
         {
-            in = new Scanner(new FileReader(path+name+"_"+move+".map"));
-            in2 = new Scanner(new FileReader(path+name+"_"+move+".col"));
+            for(GLtile[] a : gr)
+            {
+                for(GLtile ignored : a)
+                {
+                    //Tools.p(q+":"+w);
+                    if(z==0)
+                    {
+                        grid[z][q][w] = new GLtile("tl-default.png",w*32+50,q*32+50,(char)10000000,'*');
+                        Tools.p("["+w+":"+q+":"+z+"] loaded base");
+                    }
+                    else
+                    {
+                        grid[z][q][w] = new GLtile("invisible.png",w*32+50,q*32+50,(char)10000000,'*');
+                        Tools.p("["+w+":"+q+":"+z+"] loaded invis");
+                    }
+                    w++;
+                }
+                q++;
+                w = 0;
+            }
+            q = 0;
+            z++;
+        }
+        String path = "src\\Assets\\Scenes\\";
+
+        Scanner in;
+        Scanner in2;
+        q = 0;
+        w = 0;
+        z = 0;
+        Tools.p("loading tiles from save");
+        for(GLtile[][] gr : grid)
+        {
+            in = new Scanner(new FileReader(path+name+"_"+z+".map"));
+            Tools.p("opened "+path+name+"_"+z+".map");
+            in2  = new Scanner(new FileReader(path+name+"_"+z+".col"));
+            Tools.p("opened "+path+name+"_"+z+".col");
             for(GLtile[] a : gr)
             {
                 String s = in.nextLine();
+                Tools.p("read : "+s+" from "+path+name+"_"+z+".map");
                 String s2 = in2.nextLine();
+                Tools.p("read : "+s2+" from "+path+name+"_"+z+".col");
                 char[] sp = s.toCharArray();
                 char[] sp2 = s2.toCharArray();
+
                 for(GLtile b : a)
                 {
-                    GLtile t = findTile(sp[w]);
-                    //System.out.println(t);
-                    b = new GLtile("tl-"+t.tag,w*32+50,q*32+50,sp[w],sp2[w]);
-                    grid[move][q][w] = b;
+
+                    try
+                    {
+                        GLtile t = findTile(sp[w]);
+                        b = new GLtile("tl-"+t.tag,w*32+50,q*32+50,sp[w],sp2[w]);
+                    }
+                    catch (Exception e)
+                    {
+                        Tools.p(e,31);
+                        b = new GLtile("default.png",w*32+50,q*32+50,(char)20000000,'*');
+                    }
+
+                    if(b.sm!=(char)10000000)
+                    {
+                        grid[z][q][w] = b;
+                        Tools.p("loaded tile : "+b.p());
+                    }
                     w++;
                 }
                 w=0;
                 q++;
             }
-            w=0;
             q=0;
-            move++;
-            in.close();
-            in2.close();
+            z++;
         }
+        Tools.p("finished loading");
     }
 
+
+    public static void p(char[] a)
+    {
+        System.out.print("[");
+        for(char c:a)
+        {
+            System.out.print(c+",");
+        }
+        System.out.print("]");
+        System.out.println();
+    }
     /**
      * Renders all GLimages in images[] and runs their updates their information.
      */
@@ -789,7 +1013,7 @@ public class TilemapEditor {
                 button.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
                 if(button.tag.equals("<>mrk"))
                 {
-                    GLbutton b = findBut("-l-"+cL);
+                    GLbutton b = findBut("-l-"+(cL+1));
                     button.x = b.x;
                 }
             }
@@ -805,7 +1029,10 @@ public class TilemapEditor {
                 {
                     for(GLtile l : a)
                     {
-                        l.render();
+                        if(l!=null)
+                        {
+                            l.render();
+                        }
                     }
                 }
             }
@@ -839,9 +1066,14 @@ public class TilemapEditor {
             {
                 for(GLtile b : a)
                 {
+                    if(b==null)
+                    {
+                        break;
+                    }
                     if(!java.util.Objects.equals(b.tag, "def")&& b.spread)
                     {
                         GLtile sub = new GLtile("default.png",-100,-100,(char)1,'*');
+
                         GLtile up   = sub;
                         GLtile uplf = sub;
                         GLtile dn   = sub;
@@ -1015,7 +1247,11 @@ public class TilemapEditor {
         aa.sm = me.sm;
         aa.me = me.me;
         aa.pt = me.pt;
-        aa.tp = curSel.tp;
+        if(!aa.iden)
+        {
+            aa.tp = curSel.tp;
+        }
+        aa.iden = true;
     }
 
     /**

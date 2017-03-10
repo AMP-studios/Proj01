@@ -1,4 +1,5 @@
 import CustomUtils.Time;
+import com.sun.corba.se.impl.oa.toa.TOA;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
@@ -50,6 +51,8 @@ public class LibTest {
 	//A stopwatch which holds the time since the game started
 	private static final Time gameTime=new Time();
 
+	private static Time doorCooldown=new Time();
+
 	private static int currentUnit = 0;
 
 	private static String curUnit = "";
@@ -60,15 +63,21 @@ public class LibTest {
 
 	private static ArrayList<GLtext> text = new ArrayList<>();
 
-	private static String curLevel = "0-0";
+	private static String curLevel = "lvl1";
 
-	private static GLtile[][] grid = new GLtile[640/32][800/32];
+	public  static GLtile[][][] grid = new GLtile[3][640/32][800/32];
 
 	private static ArrayList<GLtile> tiles = new ArrayList<>();
 
 	private static ArrayList<String> names = new ArrayList<>();
 
 	private static ArrayList<String> coll = new ArrayList<>();
+
+	private static ArrayList<GLpreload> PRELOADS = new ArrayList<>();
+
+	private static ArrayList<GLenemy> enemies = new ArrayList<>();
+
+	private static ArrayList<GLdoor> doors = new ArrayList<>();
 
 
 	/**
@@ -194,12 +203,25 @@ public class LibTest {
 		PLAYER = new GLplayer(x,y,health,speed,rate);
 	}
 
+	public static void createEnemy(int x, int y, double health, double speed, double rate) throws IOException
+	{
+		GLenemy tex = new GLenemy(x,y,health,speed,rate);
+		enemies.add(tex);
+	}
+
 	public static void createTile(String img, int x, int y, char use, char type) throws IOException
 	{
 		GLtile tex = new GLtile("tl-"+img,x,y,use,type);
 		tex.tag = img;
 		tiles.add(tex);
 	}
+
+	public static void createPreload(String name) throws IOException
+	{
+		GLpreload tex = new GLpreload(name);
+		PRELOADS.add(tex);
+	}
+
 
 
 	/**
@@ -211,8 +233,12 @@ public class LibTest {
 		try {
 
 			//createText("hello world",0,0,10);
+			doorCooldown.start();
 			createPlayer(200,200,100,250,10);
-			loadMap("lvl2");
+			preload();
+			loadMapFromPreload("lvl1");
+			loadDoors();
+			createEnemy(100,100,100,2,1000);
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -243,7 +269,8 @@ public class LibTest {
 		return tiles.get(0);
 	}
 
-	public static boolean chkCol()
+
+	public static boolean chkCol() throws IOException
 	{
 		boolean k = false;
 		int q = 0;
@@ -251,7 +278,7 @@ public class LibTest {
 		int si = 28;
 		int ct = (32-si)/2;
 
-		for(GLtile[] a : grid)
+		for(GLtile[] a : grid[1])
 		{
 			for (GLtile l : a)
 			{
@@ -271,26 +298,162 @@ public class LibTest {
 					k = true;
 
 				}
+				if((l.tp+"").equals("@") && (x<px+si && x+si>px) && (y<py+si && y+si>py)&&doorCooldown.getTime()>333)
+				{
+
+					//Tools.bp(l.sm);
+					for(int i = 0; i < doors.size(); i++)
+					{
+						if(doors.get(i).me==l.sm)
+						{
+							GLdoor cur = doors.get(i);
+							if(!cur.to.equals(curLevel))
+							{
+								loadMapFromPreload(cur.to);
+								PLAYER.x = cur.x2;
+								PLAYER.y = cur.y2;
+								Tools.bp("forward load");
+							}
+							else
+							{
+								loadMapFromPreload(cur.from);
+								PLAYER.x = cur.x1;
+								Tools.bp("backward load");
+							}
+						}
+					}
+					doorCooldown.clear();
+					doorCooldown.start();
+				}
 			}
 		}
 		return k;
 	}
 
+	public static void preload()throws IOException
+	{
+		ArrayList<String> maps = new ArrayList<>();
+		String current = new java.io.File( "." ).getCanonicalPath();
+		File folder = new File(current+"/src/Assets/Scenes");
+		File[] listOfFiles = folder.listFiles();
+		assert listOfFiles!=null;
+		for(java.io.File listOfFile : listOfFiles) {
+			if(listOfFile.isFile()&&listOfFile.getName().endsWith("_0.map")) {
+
+				maps.add(listOfFile.getName().split("_")[0]);
+				//Tools.bp("Maps : "+listOfFile.getName());
+			}
+		}
+
+		for(int i = 0; i< maps.size();i++)
+		{
+			createPreload(maps.get(i));
+		}
+	}
+
+
+	public static void loadMapFromPreload(String name)
+	{
+
+		boolean fail = true;
+		for(int i=0; i < PRELOADS.size(); i++)
+		{
+			if(PRELOADS.get(i).getName().equals(name))
+			{
+				grid = PRELOADS.get(i).getGrid();
+				Tools.bp("Scene move : "+name);
+				fail = false;
+			}
+			else
+			{
+				Tools.bp("Attempt : "+name+" != "+PRELOADS.get(i).getName());
+			}
+		}
+		if(!fail)
+		{
+			curLevel = name;
+		}
+
+	}
+
+	public static GLtile[][][] dupe(GLtile[][][] grid)
+	{
+		GLtile[][][] ret = new GLtile[grid.length][grid[0].length][grid[0][0].length];
+		int q = 0;
+		int w = 0;
+		int z = 0;
+		for(GLtile[][] gr : grid)
+		{
+			for (GLtile[] a : gr)
+			{
+				for (GLtile ignored : a)
+				{
+					ret[z][q][w] = grid[z][q][w];
+					w++;
+				}
+				w=0;
+				q++;
+			}
+			q=0;
+			z++;
+		}
+		return ret;
+	}
+
+	public static void loadDoors() throws IOException
+	{
+		String path = "src\\Assets\\Scenes\\";
+		Scanner temp = new Scanner(new FileReader(path+"doors.txt"));
+		while(temp.hasNextLine())
+		{
+			String s = temp.nextLine();
+			Tools.bp("added door "+s);
+			String[] br = s.split(",");
+			//Cm,C1,C2,x,x,y,y,z,z,to,from
+			GLdoor door = new GLdoor(br[0].toCharArray()[0],br[1].toCharArray()[0],br[2].toCharArray()[0],
+								Integer.parseInt(br[3]),
+								Integer.parseInt(br[4]),
+								Integer.parseInt(br[5]),
+								Integer.parseInt(br[6]),
+								Integer.parseInt(br[7]),
+								Integer.parseInt(br[8]),
+								br[9],br[10]);
+			doors.add(door);
+			door.p();
+		}
+	}
 
 	public static void loadMap(String name) throws IOException
 	{
+		//Tools.disablePrinting();
 		int q = 0;
 		int w = 0;
-		for(GLtile[] a : grid)
+		int z = 0;
+		Tools.p("loading grid");
+		for(GLtile[][] gr : grid)
 		{
-			for(GLtile ignored : a)
+			for(GLtile[] a : gr)
 			{
-				//Tools.p(q+":"+w);
-				grid[q][w] = new GLtile("tl-default.png",w*32+50,q*32+50,(char)128,(char)128);
-				w++;
+				for(GLtile ignored : a)
+				{
+					//Tools.p(q+":"+w);
+					if(z==0)
+					{
+						grid[z][q][w] = new GLtile("black.png",w*32,q*32,(char)10000000,'*');
+						Tools.p("["+w+":"+q+":"+z+"] loaded base");
+					}
+					else
+					{
+						grid[z][q][w] = new GLtile("invisible.png",w*32,q*32,(char)10000000,'*');
+						Tools.p("["+w+":"+q+":"+z+"] loaded invis");
+					}
+					w++;
+				}
+				q++;
+				w = 0;
 			}
-			q++;
-			w = 0;
+			q = 0;
+			z++;
 		}
 		String current = new java.io.File( "." ).getCanonicalPath();
 		File folder = new File(current+"/src/Assets/Art/Tiles");
@@ -303,31 +466,50 @@ public class LibTest {
 		}
 		for(String a:names)
 		{
-			createTile(a.substring(3),-100,-100,(char)(tiles.size()+33),'*');
+			createTile(a.substring(3),-100,-100,(char)(tiles.size()+1000),'*');
 		}
+
 		String path = "src\\Assets\\Scenes\\";
-		Scanner in = new Scanner(new FileReader(path+name+".map"));
-		Scanner in2 = new Scanner(new FileReader(path+name+".col"));
+
+		Scanner in;
+
+		Scanner in2;
 		q = 0;
 		w = 0;
-		for(GLtile[] a : grid)
+		z = 0;
+		Tools.p("loading tiles from save");
+		for(GLtile[][] gr : grid)
 		{
-			String s = in.nextLine();
-			String s2 = in2.nextLine();
-			Tools.p("aaaaa >><<>>"+s);
-			char[] sp = s.toCharArray();
-			char[] sp2 = s2.toCharArray();
-			for(GLtile b : a)
+			in = new Scanner(new FileReader(path+name+"_"+z+".map"));
+			Tools.p("opened "+path+name+"_"+z+".map");
+			in2  = new Scanner(new FileReader(path+name+"_"+z+".col"));
+			Tools.p("opened "+path+name+"_"+z+".col");
+			for(GLtile[] a : gr)
 			{
-				GLtile t = findTile(sp[w]);
-				//System.out.println(t);
-				b = new GLtile("tl-"+t.tag,w*32,q*32,sp[w],sp2[w]);
-				grid[q][w] = b;
-				w++;
+				String s = in.nextLine();
+				Tools.p("read : "+s+" from "+path+name+"_"+z+".map");
+				String s2 = in2.nextLine();
+				Tools.p("read : "+s2+" from "+path+name+"_"+z+".col");
+				char[] sp = s.toCharArray();
+				char[] sp2 = s2.toCharArray();
+				for(GLtile b : a)
+				{
+					GLtile t = findTile(sp[w]);
+					b = new GLtile("tl-"+t.tag,w*32,q*32,sp[w],sp2[w]);
+					if(b.sm!=(char)10000000)
+					{
+						grid[z][q][w] = b;
+						Tools.p("loaded tile : "+b.p());
+					}
+					w++;
+				}
+				w=0;
+				q++;
 			}
-			w=0;
-			q++;
+			q=0;
+			z++;
 		}
+		Tools.p("finished loading");
 
 	}
  
@@ -351,13 +533,22 @@ public class LibTest {
 		for(GLimage image : images) {
 			image.render();
 		}
-		for(GLtile[] a : grid)
+		for(GLtile[][] gr: grid)
 		{
-			for(GLtile l : a)
+			for(GLtile[] a : gr)
 			{
-				l.render();
+				for(GLtile l : a)
+				{
+					l.render();
+				}
 			}
 		}
+
+		for(GLenemy e : enemies)
+		{
+			e.render();
+		}
+
 		for(GLtext aText : text) {
 			aText.render();
 		}
@@ -392,6 +583,18 @@ public class LibTest {
 
 		}
 		else if (Mouse.isButtonDown(1)) {
+
+		}
+
+		if(Keyboard.isKeyDown(Keyboard.KEY_3))
+		{
+			for(int i=0; i < PRELOADS.size(); i++) {
+				Tools.bp(PRELOADS.get(i).getName());
+			}
+		}
+
+		if(Keyboard.isKeyDown(Keyboard.KEY_4))
+		{
 
 		}
 

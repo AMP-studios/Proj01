@@ -1,16 +1,55 @@
 import java.awt.image.PixelGrabber;
 import java.util.Objects;
+import java.util.Random;
 
 public class Tools {
+	private static boolean printing = true;
+
 	private static boolean isGreyscaleImage(PixelGrabber pg) {
 		return pg.getPixels() instanceof byte[];
 	}
 
 	public static void p(Object lp)
 	{
-		System.out.println(lp);
+		if(printing)
+		{
+			System.out.println(lp);
+		}
 	}
 
+	public static void p(Object lp,int color)
+	{
+			System.out.println("\033["+color+"m"+lp);
+			System.out.print("\033[0m");
+	}
+
+	public static void bp(Object lp)
+	{
+			System.out.println(lp);
+	}
+
+	public static int random(int top, int bot)
+	{
+		//Tools.bp("query for random between "+ top +" and "+ bot+".");
+		if(bot > top)
+		{
+			int temp = top;
+			top = bot;
+			bot = temp;
+		}
+		//Tools.bp(top-bot);
+		return new Random().nextInt(top-bot) + bot;
+	}
+
+	public static void enablePrinting()
+	{
+		printing=true;
+	}
+
+	public static void disablePrinting()
+	{
+		printing=false;
+	}
 
 	public static int[] toC(int pixel) {
 		int alpha = (pixel >> 24) & 0xff;

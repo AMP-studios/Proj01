@@ -74,6 +74,7 @@ public class GLweapon {
 					if(pattern.equals("straight"))
 					{
 						GLbullet b = new GLbullet(x,y,exe);
+						b.dir = fcg;
 						switch(fcg) {
 							case "up":
 								b.dX=0;
@@ -212,12 +213,22 @@ public class GLweapon {
 		return re;
 
 	}
-
+	public static double round(double ipt)
+	{
+		if(ipt<0.00001)
+		{
+			return 0.0;
+		}
+		else
+		{
+			return ipt;
+		}
+	}
 	public double[] diff(double ang, double speed)
 	{
-
-		double dx = Math.sin(ang)*speed;
-		double dy = Math.cos(ang)*speed;
+		ang = Math.toRadians(ang);
+		double dx = round(Math.sin(ang))*speed;
+		double dy = round(Math.cos(ang))*speed;
 		return new double[]{dx,dy};
 	}
 	public void render() throws IOException

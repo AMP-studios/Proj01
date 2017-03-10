@@ -12,14 +12,15 @@ import static java.lang.System.out;
 
 
 public class GLbullet{
-	int x;
+	double x;
 	private int enl = 0;
-	int y;
+	double y;
 	double dX;
 	double dY;
 	double damage;
 	int rad = 10;
 	boolean moving = false;
+	String dir = "";
 	boolean active = true;
 	int wait = 0;
 	private String pth = "Assets\\Art\\Tiles\\";
@@ -29,6 +30,7 @@ public class GLbullet{
 	char cur = 0;
 	int pp =0;
 	char[] exe;
+	double ZERO = 10E-324;
 	public GLbullet(int x, int y, String exe) throws IOException
 	{
 		this.x = x;
@@ -37,32 +39,30 @@ public class GLbullet{
 		this.exe = exe.toCharArray();
 		cur = this.exe[pp];
 		pp++;
-
-	}
-	public void vel(double dx, double dy)
-	{
-		dX = dx;
-		dY = dy;
 		moving = true;
+
 	}
 	public void stop()
 	{
-		dX = 0;
-		dY = 0;
 		moving = false;
 	}
+
 	public void update() throws IOException
 	{
-
-		this.x += this.dX;
-		this.y += this.dY;
-		if(wait < 1 && active)
+		if(moving)
 		{
+			this.x += this.dX;
+			this.y += this.dY;
+		}
+			if(wait < 1 && active)
+		{
+			if((""+cur).equals("S"))
+			{
+				this.stop();
+			}
 
 			if((""+cur).equals("f")||(""+cur).equals("b")||(""+cur).equals("l")||(""+cur).equals("r"))
 			{
-				try
-				{
 					char save =cur;
 					cur = this.exe[pp];
 					pp++;
@@ -80,11 +80,7 @@ public class GLbullet{
 						amt += Integer.parseInt(""+no1);
 					}
 					addDt(""+save,amt);
-				}
-				catch (Exception e)
-				{
 
-				}
 			}
 			if((""+cur).equals("e"))
 			{
@@ -129,20 +125,25 @@ public class GLbullet{
 
 	public void addDt(String dir, int power)
 	{
+		moving = true;
 		if(dir.equals("f"))
 		{
-			dX = pn((int)dX)*(power);
-			dY = pn((int)dY)*(power);
+			dX = pn(dX)*(power);
+			dY = pn(dY)*(power);
 		}
 		if(dir.equals("b"))
 		{
-			dX = -pn((int)dX)*(power);
-			dY = -pn((int)dY)*(power);
+			dX = -pn(dX)*(power);
+			dY = -pn(dY)*(power);
 		}
 	}
 
-	public int pn(int a)
+	public double pn(double a)
 	{
+		if(a==0)
+		{
+			return 0;
+		}
 		return (a/Math.abs(a));
 	}
 
@@ -155,16 +156,21 @@ public class GLbullet{
 			texture.bind();
 			GL11.glBegin(GL11.GL_QUADS);
 			GL11.glTexCoord2f(0,0);
-			GL11.glVertex2f(x-enl,y-enl);
+			GL11.glVertex2f(tf(x-enl),tf(y-enl));
 			GL11.glTexCoord2f(1,0);
-			GL11.glVertex2f(x+texture.getTextureWidth()+enl,y-enl) ;
+			GL11.glVertex2f(tf(x+texture.getTextureWidth()+enl),tf(y-enl)) ;
 			GL11.glTexCoord2f(1,1);
-			GL11.glVertex2f(x+texture.getTextureWidth()+enl,y+texture.getTextureHeight()+enl);
+			GL11.glVertex2f(tf(x+texture.getTextureWidth()+enl),tf(y+texture.getTextureHeight()+enl));
 			GL11.glTexCoord2f(0,1);
-			GL11.glVertex2f(x-enl,y+texture.getTextureHeight()+enl);
+			GL11.glVertex2f(tf(x-enl),tf(y+texture.getTextureHeight()+enl));
 			GL11.glEnd();
 		}
 
+	}
+
+	public float tf(double a)
+	{
+		return (float)a;
 	}
 
 	public void enlarge(int s)

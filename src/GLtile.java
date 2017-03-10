@@ -27,6 +27,7 @@ public class GLtile {
 	public String command = "";
 	public String pt;
 	public boolean spread = false;
+	boolean iden = false;
 	public GLtile(String path,int x, int y, char symbol, char type) throws IOException
 	{
 		pt = path;
@@ -82,9 +83,9 @@ public class GLtile {
 			for(int i = 0; i < me.curWeapon.bullets.size(); i++)
 			{
 				GLbullet cur = me.curWeapon.bullets.get(i);
-				if(cur.x > this.x && cur.x < this.x + 32)
+				if(cur.x+16 > this.x && cur.x+16 < this.x + 32)
 				{
-					if(cur.y > this.y && cur.y < this.y+32)
+					if(cur.y+16 > this.y && cur.y+16 < this.y+32)
 					{
 						cur.active = false;
 					}
