@@ -75,6 +75,7 @@ public class GLweapon {
 					{
 						GLbullet b = new GLbullet(x,y,exe);
 						b.dir = fcg;
+						b.damage=dmg;
 						switch(fcg) {
 							case "up":
 								b.dX=0;
@@ -106,6 +107,7 @@ public class GLweapon {
 							String[] q=aRr.split(",");
 							b.dX=Double.parseDouble(q[0]);
 							b.dY=Double.parseDouble(q[1]);
+							b.damage=dmg;
 							bullets.add(b);
 						}
 					}
@@ -116,6 +118,7 @@ public class GLweapon {
 							String[] q=aRr.split(",");
 							b.dX=Double.parseDouble(q[0]);
 							b.dY=Double.parseDouble(q[1]);
+							b.damage=dmg;
 							bullets.add(b);
 						}
 					}

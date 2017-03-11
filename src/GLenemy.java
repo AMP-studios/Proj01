@@ -1,4 +1,5 @@
 import CustomUtils.Time;
+import com.sun.corba.se.impl.oa.toa.TOA;
 import org.lwjgl.opengl.GL11;
 import org.newdawn.slick.Color;
 import org.newdawn.slick.opengl.Texture;
@@ -8,6 +9,7 @@ import org.newdawn.slick.util.ResourceLoader;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Created by bodyi on 2/9/2017.
@@ -38,22 +40,34 @@ public class GLenemy {
     private boolean limit_L = false;
     private boolean limit_R = false;
     private boolean limit_U = false;
+    private Time lookTimer = new Time();
+    private int visionRange = 300;
     private boolean limit_D = false;
     int nextMovePointIndex = 0;
     private Time collCd = new Time();
     private int ANGLE = 300;
     private Time turnTime = new Time();
-    private static ArrayList<String> coll = new ArrayList<>();
+    private int circle = 0;
+    private int turn = 1000;
+    private boolean playerInVision = false;
+    private ArrayList<String> coll = new ArrayList<>();
     private static GLtile[][][] grid = new GLtile[3][640/32][800/32];
+    private GLimage pointer = new GLimage("pointer.png",-100,-100);
+    public boolean alive;
+    private GLhealthbar hpBar;
     public GLenemy(int x, int y, double health, double speed, double rate) throws IOException
     {
+        hpBar = new GLhealthbar(x,y,(int)health,50);
+        hpBar.setTether(this);
         turnTime.start();
         collCd.start();
+        alive = true;
         this.rate = rate;
         shootTimer=new Time();
         shootTimer.start();
         gridUpdateTimer=new Time();
         gridUpdateTimer.start();
+        lookTimer.start();
         this.x = x;
         this.health = health;
         this.speed = speed;
@@ -79,7 +93,7 @@ public class GLenemy {
         }
         shooting=true;
         patt=new java.util.ArrayList<>();
-        curWeapon=new GLweapon("a9:3:!#f1-e");
+        curWeapon=new GLweapon("a9:3:!#f4=e");
         setGrid(LibTest.grid);
         //getNextPoint();
     }
@@ -127,21 +141,26 @@ public class GLenemy {
 
     public static GLtile tileAt(int x, int y)
     {
-        for(GLtile[][] gr : grid)
-        {
-            for(GLtile[] r : gr)
+
+            for(GLtile[] r : grid[1])
             {
                 for(GLtile t : r)
                 {
-                    if(x>t.x&&y>t.y&&x<t.x+32&&y<t.y+320)
+                    if(x>t.x&&y>t.y&&x<t.x+32&&y<t.y+32)
                     {
                         return t;
                     }
                 }
             }
-        }
+
         return grid[0][0][0];
     }
+
+    public void die()
+    {
+        alive =false;
+    }
+
     public static double round(double ipt)
     {
         if(ipt<0.00001)
@@ -170,9 +189,6 @@ public class GLenemy {
     }
 
     public boolean chkCol() throws IOException {
-        boolean k = false;
-        int q = 0;
-        int w = 0;
         int si = 28;
         int ct = (32 - si) / 2;
 
@@ -187,8 +203,6 @@ public class GLenemy {
                     if (coll.contains(ip)) {
                         coll.remove(ip);
                     }
-                    //coll.add(ip);
-                    //Tools.bp("collided with "+l.tp);
                     return true;
                 }
             }
@@ -202,12 +216,65 @@ public class GLenemy {
         double y1 = this.y;
         double x2 = p.x;
         double y2 = p.y;
-        return false;
+        double dist = distTo((int)x1,(int)y1,(int)x2,(int)y2);
+        double dx = x2-x1;
+        double dy = y2-y1;
+        double mx = dx/dist;
+        double my = dy/dist;
+        if(dist>visionRange)
+        {
+            return false;
+        }
+        for(int i = 0; i < (int)dist; i++)
+        {
+            GLtile cur = tileAt((int)(mx*i+x),(int)(my*i+y));
+            if(cur.tp=='#')
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public void bulletCol()
+    {
+        GLplayer me = LibTest.PLAYER;
+        for(int i = 0; i < me.curWeapon.bullets.size(); i++)
+        {
+            GLbullet cur = me.curWeapon.bullets.get(i);
+            if(cur.x+16 > this.x && cur.x+16 < this.x + 32)
+            {
+                if(cur.y+16 > this.y && cur.y+16 < this.y+32 && cur.active)
+                {
+                    cur.active = false;
+                    health-=cur.damage;
+                    hpBar.subtract((int)cur.damage);
+                }
+            }
+        }
     }
 
     public void act() throws IOException
     {
-        if(turnTime.getTime()>2000)
+
+        if(health<=0)
+        {
+            die();
+        }
+        //mark010
+        if(lookTimer.getTime()>0)
+        {
+            playerInVision = LOS(LibTest.PLAYER);
+            lookTimer.clear();
+            lookTimer.start();
+            Tools.bp(playerInVision);
+        }
+        if(circle>=8)
+        {
+            turn = LibTest.rRn(100,4000);
+            circle = 0;
+        }
+        if(turnTime.getTime()>turn)
         {
             turn();
             turnTime.clear();
@@ -230,11 +297,17 @@ public class GLenemy {
     public void turn()
     {
         ANGLE+=45;
+        circle++;
     }
 
     public void render() throws IOException
     {
         setTex();
+        curWeapon.fcg = facing;
+        curWeapon.x = (int)this.x;
+        curWeapon.y = (int)this.y;
+        curWeapon.render();
+        hpBar.render();
         Color.white.bind();
         texture.bind();
         GL11.glBegin(GL11.GL_QUADS);
@@ -248,10 +321,8 @@ public class GLenemy {
         GL11.glVertex2f((int)x,(int)y+texture.getTextureHeight());
         GL11.glEnd();
         updt();
-        curWeapon.fcg = facing;
-        curWeapon.x = (int)this.x;
-        curWeapon.y = (int)this.y;
-        curWeapon.render();
+        pointer.render();
+
     }
 
     public void updateDS()
@@ -266,6 +337,7 @@ public class GLenemy {
     {
         updateDS();
         act();
+        bulletCol();
         if(gridUpdateTimer.getTime() > 1000)
         {
             setGrid(LibTest.grid);
@@ -282,26 +354,6 @@ public class GLenemy {
         this.y+=moveDy;
     }
 
-    public void getNextPoint()
-    {
-        String cur = points.get(nextMovePointIndex);
-        nextMovePointIndex++;
-        String next = points.get(nextMovePointIndex);
-        nextMovePointIndex = nextMovePointIndex%points.size();
-        String[] b = cur.split(",");
-        int a1 = Integer.parseInt(b[0]);
-        int a2 = Integer.parseInt(b[1]);
-        String[] c = next.split(",");
-        int b1 = Integer.parseInt(c[0]);
-        int b2 = Integer.parseInt(c[1]);
-        double hyp = distTo(a1,a2,b1,b2);
-        double adj = Math.abs(a1-b1);
-        double opp = Math.abs(a2-b2);
-        Tools.bp(opp+", "+adj+", "+hyp);
-        moveDx = adj/hyp;
-        moveDy = opp/hyp;
-        Tools.bp(moveDx+", "+moveDy);
-    }
 
     public void shoot()
     {

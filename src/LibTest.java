@@ -35,6 +35,8 @@ public class LibTest {
 	private static final int W = 800;
 	private static final int H = 640;
 
+	private static ArrayList<GLenemy> torem = new ArrayList<>();
+
 	private static boolean limit_U = false;
 	private static boolean limit_D = false;
 	private static boolean limit_L = false;
@@ -234,11 +236,12 @@ public class LibTest {
 
 			//createText("hello world",0,0,10);
 			doorCooldown.start();
-			createPlayer(200,200,100,250,100);
+			createPlayer(200,200,100,250,1);
 			preload();
 			loadMapFromPreload("lvl1");
 			loadDoors();
-			createEnemy(100,200,100,2,1000);
+			createEnemy(100,200,1000,2,1000);
+
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -542,7 +545,18 @@ public class LibTest {
 		for(GLenemy e : enemies)
 		{
 			e.render();
+			if(!e.alive)
+			{
+				torem.add(e);
+			}
 		}
+
+		for(GLenemy e : torem)
+		{
+			enemies.remove(e);
+		}
+
+		torem.clear();
 
 		for(GLtext aText : text) {
 			aText.render();

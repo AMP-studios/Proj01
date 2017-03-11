@@ -25,7 +25,8 @@ public class GLimage extends Component {
 	// special id that is given to every object.
 	private int identity;
 	// x and y position.
-	private int x,y;
+	public int x;
+	public int y;
 
 	int enl = 0;
 
