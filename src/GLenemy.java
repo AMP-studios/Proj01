@@ -35,11 +35,20 @@ public class GLenemy {
     String movement = "close";
     double moveDx = 0;
     double moveDy = 0;
+    private boolean limit_L = false;
+    private boolean limit_R = false;
+    private boolean limit_U = false;
+    private boolean limit_D = false;
     int nextMovePointIndex = 0;
+    private Time collCd = new Time();
+    private int ANGLE = 300;
+    private Time turnTime = new Time();
+    private static ArrayList<String> coll = new ArrayList<>();
     private static GLtile[][][] grid = new GLtile[3][640/32][800/32];
     public GLenemy(int x, int y, double health, double speed, double rate) throws IOException
     {
-
+        turnTime.start();
+        collCd.start();
         this.rate = rate;
         shootTimer=new Time();
         shootTimer.start();
@@ -68,12 +77,11 @@ public class GLenemy {
             dir.add(e);
             a++;
         }
-        shooting=false;
+        shooting=true;
         patt=new java.util.ArrayList<>();
         curWeapon=new GLweapon("a9:3:!#f1-e");
         setGrid(LibTest.grid);
-        selPoints(100,10);
-        getNextPoint();
+        //getNextPoint();
     }
     public void setTex()
     {
@@ -83,90 +91,38 @@ public class GLenemy {
     {
         grid = a;
     }
-
-
-    public void selPoints(int radius,int num)
+    public int getDir(String spec)
     {
-        ArrayList<String> options =  new ArrayList<>();
-        int complete = 0;
-        double smallR = Double.MAX_VALUE;
-        for(int i = 0; i < 359; i += 10)
+        String[] a = spec.split(":");
+        int ox = Integer.parseInt(a[1])+16;
+        int oy = Integer.parseInt(a[2])+16;
+        int mx = (int)this.x+16;
+        int my = (int)this.y+16;
+        if(ox > mx && (oy>my-16 && oy<my+16))
         {
-            double a = distToWall(i,radius,(int)this.x+16,(int)this.y+16);
-            //Tools.bp("-> "+a);
-            if(a < smallR)
-            {
-                smallR = a;
-            }
+            limit_R = true;
+            return 0;
         }
-        while(complete < num)
+        if(ox <= mx && (oy>my-16 && oy<my+16))
         {
-            int x = Tools.random((int)(this.x+16+smallR),(int)(this.x+16-smallR));
-            int y = Tools.random((int)(this.y+16+smallR),(int)(this.y+16-smallR));
-            if(distTo((int)(this.x+16+smallR),(int)(this.y+16+smallR),x,y)<smallR)
-            {
-                options.add(x+","+y);
-                complete++;
-            }
+            limit_L = true;
+            return 0;
         }
-        switch (movement)
+        if(oy > my && (ox>mx-16 && ox<mx+16))
         {
-            case "close":
-                for(int i = 0; i < options.size(); i++)
-                {
-                    int min = Integer.MAX_VALUE;
-                    String add = "";
-                    for(int a = i; a < options.size(); a++)
-                    {
-                        String[] c = options.get(i).split(",");
-                        int b1 = Integer.parseInt(c[0]);
-                        int b2 = Integer.parseInt(c[1]);
-                        if(a!=i)
-                        {
-
-                            String[] b = options.get(a).split(",");
-                            int a1 = Integer.parseInt(b[0]);
-                            int a2 = Integer.parseInt(b[1]);
-                            if(distTo(b1,b2,a1,a2)<min)
-                            {
-                                min = (int)distTo(b1,b2,a1,a2);
-                                add = a1+","+a2;
-                            }
-                        }
-                    }
-                    points.add(add);
-                }
+            limit_D = true;
+            return 0;
         }
+        if(oy <= my && (ox>mx-16 && ox<mx+16))
+        {
+            limit_U = true;
+            return 0;
+        }
+        return -1;
     }
-
-    public void setPath(String type)
-    {
-        movement = type;
-    }
-
     public double distTo(int x1, int y1, int x2, int y2)
     {
         return Math.sqrt(Math.pow(Math.abs(x1-x2),2)+Math.pow(Math.abs(y1-y2),2));
-    }
-
-    public static double distToWall(double angle, int radius,int x, int y)
-    {
-        angle = Math.toRadians(angle);
-        double dx = Math.cos(angle);
-        double dy = Math.sin(angle);
-        dx = round(dx);
-        dy = round(dy);
-        for(int i = 0; i < radius;i++)
-        {
-            GLtile cur = tileAt(x,y);
-            if(cur!=null&&cur.tp=='#')
-            {
-                return i;
-            }
-            x+=dx;
-            y+=dy;
-        }
-        return radius;
     }
 
     public static GLtile tileAt(int x, int y)
@@ -213,6 +169,69 @@ public class GLenemy {
         return dir.get(idx);
     }
 
+    public boolean chkCol() throws IOException {
+        boolean k = false;
+        int q = 0;
+        int w = 0;
+        int si = 28;
+        int ct = (32 - si) / 2;
+
+        for (GLtile[] a : grid[1]) {
+            for (GLtile l : a) {
+                int x = l.x;
+                int y = l.y;
+                int px = (int) this.x + ct;
+                int py = (int) this.y + ct;
+                if ((l.tp + "").equals("#") && (x < px + si && x + si > px) && (y < py + si && y + si > py)) {
+                    String ip = "true:" + l.x + ":" + l.y;
+                    if (coll.contains(ip)) {
+                        coll.remove(ip);
+                    }
+                    //coll.add(ip);
+                    //Tools.bp("collided with "+l.tp);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean LOS(GLplayer p)
+    {
+        double x1 = this.x;
+        double y1 = this.y;
+        double x2 = p.x;
+        double y2 = p.y;
+        return false;
+    }
+
+    public void act() throws IOException
+    {
+        if(turnTime.getTime()>2000)
+        {
+            turn();
+            turnTime.clear();
+            turnTime.start();
+        }
+        if(collCd.getTime()>100&&chkCol())
+        {
+            turn();
+            turn();
+            collCd.clear();
+            collCd.start();
+        }
+        for(String a : coll)
+        {
+            getDir(a);
+        }
+
+    }
+
+    public void turn()
+    {
+        ANGLE+=45;
+    }
+
     public void render() throws IOException
     {
         setTex();
@@ -235,18 +254,18 @@ public class GLenemy {
         curWeapon.render();
     }
 
-    public void updt()
+    public void updateDS()
     {
-        String cur = points.get(nextMovePointIndex);
-        String[] b = cur.split(",");
-        int a1 = Integer.parseInt(b[0]);
-        int a2 = Integer.parseInt(b[1]);
-        //Tools.bp(distTo(a1,a2,(int)this.x+16,(int)this.y+16));
-        if(distTo(a1,a2,(int)this.x+16,(int)this.y+16)<30)
-        {
-            Tools.bp("===reached point===");
-            getNextPoint();
-        }
+        ANGLE=ANGLE%360;
+        double angle = Math.toRadians(ANGLE);
+        this.moveDx = Math.cos(angle);
+        this.moveDy = Math.sin(angle);
+    }
+
+    public void updt() throws IOException
+    {
+        updateDS();
+        act();
         if(gridUpdateTimer.getTime() > 1000)
         {
             setGrid(LibTest.grid);

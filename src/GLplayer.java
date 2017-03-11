@@ -56,7 +56,7 @@ public class GLplayer {
 		}
 		shooting=false;
 		patt=new java.util.ArrayList<>();
-		curWeapon=new GLweapon("a1:3:!#f1--l2-l1-r2--l1==e");
+		curWeapon=new GLweapon("a1:3:!#f4-f2-.f1-..S--e");
 	}
 	public void setTex()
 	{

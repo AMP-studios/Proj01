@@ -198,8 +198,9 @@ public class GLweapon {
 
 	}
 
-	private String[] curveSp(int angle, int points, double speed)
+	private String[] curveSp(double angle, int points, double speed)
 	{
+		angle = Math.toRadians(angle);
 		double sub = angle/points;
 		double top = angle/2;
 		String[] re = new String[points];

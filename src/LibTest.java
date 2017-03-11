@@ -234,11 +234,11 @@ public class LibTest {
 
 			//createText("hello world",0,0,10);
 			doorCooldown.start();
-			createPlayer(200,200,100,250,10);
+			createPlayer(200,200,100,250,100);
 			preload();
 			loadMapFromPreload("lvl1");
 			loadDoors();
-			createEnemy(100,100,100,2,1000);
+			createEnemy(100,200,100,2,1000);
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -298,7 +298,7 @@ public class LibTest {
 					k = true;
 
 				}
-				if((l.tp+"").equals("@") && (x<px+si && x+si>px) && (y<py+si && y+si>py)&&doorCooldown.getTime()>333)
+				if((l.tp+"").equals("@") && (x<px+si && x+si>px) && (y<py+si && y+si>py)&&doorCooldown.getTime()>1000)
 				{
 
 					//Tools.bp(l.sm);
@@ -310,14 +310,15 @@ public class LibTest {
 							if(!cur.to.equals(curLevel))
 							{
 								loadMapFromPreload(cur.to);
-								PLAYER.x = cur.x2;
-								PLAYER.y = cur.y2;
+								PLAYER.x = cur.x1*32;
+								PLAYER.y = cur.y1*32;
 								Tools.bp("forward load");
 							}
 							else
 							{
 								loadMapFromPreload(cur.from);
-								PLAYER.x = cur.x1;
+								PLAYER.x = cur.x2*32;
+								PLAYER.y = cur.y2*32;
 								Tools.bp("backward load");
 							}
 						}
@@ -351,22 +352,16 @@ public class LibTest {
 		}
 	}
 
-
 	public static void loadMapFromPreload(String name)
 	{
-
 		boolean fail = true;
 		for(int i=0; i < PRELOADS.size(); i++)
 		{
 			if(PRELOADS.get(i).getName().equals(name))
 			{
 				grid = PRELOADS.get(i).getGrid();
-				Tools.bp("Scene move : "+name);
+				//Tools.bp("Scene move : "+name);
 				fail = false;
-			}
-			else
-			{
-				Tools.bp("Attempt : "+name+" != "+PRELOADS.get(i).getName());
 			}
 		}
 		if(!fail)
@@ -400,7 +395,7 @@ public class LibTest {
 		return ret;
 	}
 
-	public static void loadDoors() throws IOException
+	private static void loadDoors() throws IOException
 	{
 		String path = "src\\Assets\\Scenes\\";
 		Scanner temp = new Scanner(new FileReader(path+"doors.txt"));
@@ -787,7 +782,7 @@ public class LibTest {
 			limit_U = true;
 			return 0;
 		}
-		return 0;
+		return -1;
 	}
 
 	//levels start with 0 and so do areas

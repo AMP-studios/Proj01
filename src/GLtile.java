@@ -1,3 +1,4 @@
+import CustomUtils.Time;
 import org.lwjgl.opengl.GL11;
 import org.newdawn.slick.Color;
 import org.newdawn.slick.opengl.Texture;
@@ -28,6 +29,8 @@ public class GLtile {
 	public String pt;
 	public boolean spread = false;
 	boolean iden = false;
+	private int renderDelay = 0;
+	public Time delay = new Time();
 	public GLtile(String path,int x, int y, char symbol, char type) throws IOException
 	{
 		pt = path;
@@ -57,22 +60,26 @@ public class GLtile {
 		w = texture.getTextureWidth();
 	}
 
+	public void setRenderDelay(int d)
+	{
+		renderDelay = d;
+	}
+
 	public void render()
 	{
-		Color.white.bind();
-		texture.bind();
-		GL11.glBegin(GL11.GL_QUADS);
-		GL11.glTexCoord2f(0,0);
-		GL11.glVertex2f(x,y);
-		GL11.glTexCoord2f(1,0);
-		GL11.glVertex2f(x+texture.getTextureWidth(),y) ;
-		GL11.glTexCoord2f(1,1);
-		GL11.glVertex2f(x+texture.getTextureWidth(),y+texture.getTextureHeight());
-		GL11.glTexCoord2f(0,1);
-		GL11.glVertex2f(x,y+texture.getTextureHeight());
-		GL11.glEnd();
-		bulletColl();
-
+			Color.white.bind();
+			texture.bind();
+			GL11.glBegin(GL11.GL_QUADS);
+			GL11.glTexCoord2f(0,0);
+			GL11.glVertex2f(x,y);
+			GL11.glTexCoord2f(1,0);
+			GL11.glVertex2f(x+texture.getTextureWidth(),y) ;
+			GL11.glTexCoord2f(1,1);
+			GL11.glVertex2f(x+texture.getTextureWidth(),y+texture.getTextureHeight());
+			GL11.glTexCoord2f(0,1);
+			GL11.glVertex2f(x,y+texture.getTextureHeight());
+			GL11.glEnd();
+			bulletColl();
 	}
 
 	public void bulletColl()
