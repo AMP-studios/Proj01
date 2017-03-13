@@ -25,7 +25,7 @@ import static org.lwjgl.opengl.GL11.*;
  * @version 1.0
  * @since 2016-12-3
  * */
-
+//jh
 public class LibTest {
 	private static boolean debug =false;
 	private static boolean isFullScreen=false;
