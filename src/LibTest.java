@@ -17,8 +17,6 @@ import static org.lwjgl.opengl.GL11.*;
 //import static javax.swing.plaf.metal.MetalBumps.createBuffer;
 
 /**
- *
- *
  * The LibTest class is the main class. 
  * 
  * Within this class sprites are drawn, deleted, and updated.
