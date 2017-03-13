@@ -2,6 +2,7 @@ import javax.tools.Tool;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -19,6 +20,12 @@ public class GLpreload {
     private  ArrayList<String> names = new ArrayList<>();
 
     private  GLtile[][][] grid = new GLtile[3][640/32][800/32];
+
+    private ArrayList<String> existingTiles = new ArrayList<>();
+
+    private PrintWriter in;
+
+    private String path = "src\\Assets\\Art\\Tiles\\";
 
     private  GLtile findTile(String tag)
     {
@@ -44,14 +51,66 @@ public class GLpreload {
         return tiles.get(0);
     }
 
-    private  void createTile(String img, int x, int y, char use, char type) throws IOException
+    public void createTile(String img, int x, int y, char use, char type) throws IOException
     {
+
+        if(isExisting(img))
+        {
+            use=existingTiles.get(findExisting(img)).split(",")[1].toCharArray()[0];
+        }
+        else
+        {
+            String newThing = img+","+use;
+            Tools.bp("added new tile: "+img+" as "+use);
+            for(String a : existingTiles)
+            {
+                in.print(a);
+                in.println();
+            }
+            in.print(newThing);
+            in.println();
+            existingTiles.add(newThing);
+        }
         GLtile tex = new GLtile("tl-"+img,x,y,use,type);
         tex.tag = img;
         Tools.p("["+(tiles.size()+1)+"] ld-> "+tex.tag);
         tiles.add(tex);
     }
+    private boolean isExisting(String name)
+    {
+        int at = findExisting(name);
+        if(at>0&&existingTiles.get(at).split(",")[0].equals(name))
+        {
+            return true;
+        }
+        return false;
+    }
 
+    private int findExisting(String name)
+    {
+        int i = 0;
+        for(String a : existingTiles)
+        {
+
+            String[] br = a.split(",");
+            if(br[0].equals(name))
+            {
+                return i;
+            }
+            i++;
+        }
+        return -1;
+    }
+
+    private void loadExisting() throws IOException
+    {
+        String path = "src\\Assets\\Art\\Tiles\\";
+        Scanner in = new Scanner(new FileReader(path+"tiles.txt"));
+        while(in.hasNextLine())
+        {
+            existingTiles.add(in.nextLine());
+        }
+    }
     public String  getName()
     {
         return name;
@@ -64,6 +123,8 @@ public class GLpreload {
 
     public GLpreload(String name) throws IOException
     {
+        in = new PrintWriter(path+"tiles.txt","UTF-8");
+        loadExisting();
         Tools.enablePrinting();
         Tools.p("preloading "+name);
         Tools.disablePrinting();

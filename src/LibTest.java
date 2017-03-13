@@ -77,6 +77,11 @@ public class LibTest {
 
 	private static ArrayList<GLenemy> enemies = new ArrayList<>();
 
+	private static ArrayList<String> existingTiles = new ArrayList<>();
+
+	private static String path = "src\\Assets\\Art\\Tiles\\";
+	private static PrintWriter in;
+
 	private static ArrayList<GLdoor> doors = new ArrayList<>();
 
 
@@ -86,6 +91,8 @@ public class LibTest {
 	 * @throws IOException if invalid path is specified
 	 */
 	public static void start() throws IOException , CustomUtils.AudioControllerException {
+		in = new PrintWriter(path+"tiles.txt","UTF-8");
+		loadExisting();
 		initGL(W,H);
 		init();
 		//createImage("whiteBack.png",0,0);
@@ -211,8 +218,26 @@ public class LibTest {
 
 	public static void createTile(String img, int x, int y, char use, char type) throws IOException
 	{
+		if(isExisting(img))
+		{
+			use=existingTiles.get(findExisting(img)).split(",")[1].toCharArray()[0];
+		}
+		else
+		{
+			String newThing = img+","+use;
+			Tools.bp("added new tile: "+img+" as "+use);
+			for(String a : existingTiles)
+			{
+				in.print(a);
+				in.println();
+			}
+			in.print(newThing);
+			in.println();
+			existingTiles.add(newThing);
+		}
 		GLtile tex = new GLtile("tl-"+img,x,y,use,type);
 		tex.tag = img;
+		Tools.p("["+(tiles.size()+1)+"] ld-> "+tex.tag);
 		tiles.add(tex);
 	}
 
@@ -257,6 +282,41 @@ public class LibTest {
 			}
 		}
 		return null;
+	}
+	private static boolean isExisting(String name)
+	{
+		int at = findExisting(name);
+		if(at>0&&existingTiles.get(at).split(",")[0].equals(name))
+		{
+			return true;
+		}
+		return false;
+	}
+
+	private static int findExisting(String name)
+	{
+		int i = 0;
+		for(String a : existingTiles)
+		{
+
+			String[] br = a.split(",");
+			if(br[0].equals(name))
+			{
+				return i;
+			}
+			i++;
+		}
+		return -1;
+	}
+
+	private static void loadExisting() throws IOException
+	{
+		String path = "src\\Assets\\Art\\Tiles\\";
+		Scanner in = new Scanner(new FileReader(path+"tiles.txt"));
+		while(in.hasNextLine())
+		{
+			existingTiles.add(in.nextLine());
+		}
 	}
 	public static GLtile findTile(char tag)
 	{
