@@ -224,16 +224,7 @@ public class LibTest {
 		}
 		else
 		{
-			String newThing = img+","+use;
-			Tools.bp("added new tile: "+img+" as "+use);
-			for(String a : existingTiles)
-			{
-				in.print(a);
-				in.println();
-			}
-			in.print(newThing);
-			in.println();
-			existingTiles.add(newThing);
+			img = "-invis.png";
 		}
 		GLtile tex = new GLtile("tl-"+img,x,y,use,type);
 		tex.tag = img;
