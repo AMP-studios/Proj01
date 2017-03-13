@@ -16,9 +16,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 import static java.lang.System.*;
-import static org.lwjgl.opengl.GL11.glCallLists;
-import static org.lwjgl.opengl.GL11.glDrawBuffer;
-import static org.lwjgl.opengl.GL11.glGetInteger;
+import static org.lwjgl.opengl.GL11.*;
 //import static javax.swing.plaf.metal.MetalBumps.createBuffer;
 //import static org.lwjgl.opengl.WindowsDisplay.createIcon;
 
@@ -37,7 +35,7 @@ import static org.lwjgl.opengl.GL11.glGetInteger;
  * @since 2016-12-3
  * */
 
-public class TilemapEditor {
+public class TilemapEditor{
     @SuppressWarnings("FieldCanBeLocal")
     private static String tool = "pen";
     public static boolean outDoorSel = false;
@@ -108,8 +106,11 @@ public class TilemapEditor {
 
     private static ArrayList<GLinput> inputs = new ArrayList<>();
 
+    private static ArrayList<String> newTiles = new ArrayList<>();
+
     public static double dt;
 
+    public static ArrayList<String> existingTiles = new ArrayList<>();
     public static GLtile[][][] tempMap = new GLtile[3][640/32][800/32];
     public static String tempName = "";
     /**
@@ -139,6 +140,19 @@ public class TilemapEditor {
             Display.update();
             Display.sync(100);
             if (Display.isCloseRequested()) {
+                String path = "src\\Assets\\Art\\Tiles\\";
+                PrintWriter in = new PrintWriter(path+"tiles.txt","UTF-8");
+                for(String a : existingTiles)
+                {
+                    in.print(a);
+                    in.println();
+                }
+                for(String a : newTiles)
+                {
+                    in.print(a);
+                    in.println();
+                }
+                in.close();
                 Display.destroy();
                 System.exit(0);
             }
@@ -209,7 +223,7 @@ public class TilemapEditor {
      */
     private static void createImage(String path, int x, int y) throws IOException
     {
-	    GLimage tex = new GLimage(path,x,y);
+        GLimage tex = new GLimage(path,x,y);
         images.add(tex);
         currentTexture+=1;
     }
@@ -217,43 +231,43 @@ public class TilemapEditor {
     public static ByteBuffer createIco(int width,int height,boolean fixAlphas,boolean makeBlackTransparent,Texture texture) {
 
         int drawBuffer = glGetInteger(GL11.GL_DRAW_BUFFER);
-    //Draw & stretch a width by height icon onto the back buffer
-    glDrawBuffer(GL11.GL_BACK);
-    texture.bind();
-    GL11.glBegin(GL11.GL_QUADS);
-      GL11.glTexCoord2f(0,0); GL11.glVertex2f(0,0);
-      GL11.glTexCoord2f(1,0); GL11.glVertex2f(width,0);
-      GL11.glTexCoord2f(1,1); GL11.glVertex2f(width,height);
-      GL11.glTexCoord2f(0,1); GL11.glVertex2f(0,height);
-    GL11.glEnd();
+        //Draw & stretch a width by height icon onto the back buffer
+        glDrawBuffer(GL11.GL_BACK);
+        texture.bind();
+        GL11.glBegin(GL11.GL_QUADS);
+        GL11.glTexCoord2f(0,0); GL11.glVertex2f(0,0);
+        GL11.glTexCoord2f(1,0); GL11.glVertex2f(width,0);
+        GL11.glTexCoord2f(1,1); GL11.glVertex2f(width,height);
+        GL11.glTexCoord2f(0,1); GL11.glVertex2f(0,height);
+        GL11.glEnd();
 
-    //Read the back buffer into the byte buffer icon
-    GL11.glReadBuffer(GL11.GL_BACK);
-    ByteBuffer icon = BufferUtils.createByteBuffer(width * height * 4);
-    GL11.glReadPixels(0,0,width,height,GL11.GL_RGBA,GL11.GL_BYTE,icon);
-    //fixAlphas:            In case of OpenGL blending and/or bitmap problems
-    //makeBlackTransparent: Cycle through and set black to be transparent
-    if(fixAlphas || makeBlackTransparent) {
-      for(int y = 0; y < height; y++) {
-        for(int x = 0; x < width; x++) {
-          int color = y * 4 * width + x * 4;
-          int red   = icon.get(color);
-          int green = icon.get(color + 1);
-          int blue  = icon.get(color + 2);
+        //Read the back buffer into the byte buffer icon
+        GL11.glReadBuffer(GL11.GL_BACK);
+        ByteBuffer icon = BufferUtils.createByteBuffer(width * height * 4);
+        GL11.glReadPixels(0,0,width,height,GL11.GL_RGBA,GL11.GL_BYTE,icon);
+        //fixAlphas:            In case of OpenGL blending and/or bitmap problems
+        //makeBlackTransparent: Cycle through and set black to be transparent
+        if(fixAlphas || makeBlackTransparent) {
+            for(int y = 0; y < height; y++) {
+                for(int x = 0; x < width; x++) {
+                    int color = y * 4 * width + x * 4;
+                    int red   = icon.get(color);
+                    int green = icon.get(color + 1);
+                    int blue  = icon.get(color + 2);
 
-          if(makeBlackTransparent && red == 0 && green == 0 && blue == 0) {
-            icon.put(color + 3,(byte)0);
-            } else if(fixAlphas) {
-            icon.put(color + 3,(byte)255);
+                    if(makeBlackTransparent && red == 0 && green == 0 && blue == 0) {
+                        icon.put(color + 3,(byte)0);
+                    } else if(fixAlphas) {
+                        icon.put(color + 3,(byte)255);
+                    }
+                }
+                System.out.println();
             }
         }
-            System.out.println();
-        }
-    }
-    glDrawBuffer(drawBuffer);
+        glDrawBuffer(drawBuffer);
 
-    return(icon);
-  }
+        return(icon);
+    }
 
     /**
      * Creates an GLimage at the position [ @param x, @param y ] with the image @param path adding the @param tag to it
@@ -305,6 +319,15 @@ public class TilemapEditor {
 
     private static void createTile(String img, int x, int y, char use, char type) throws IOException
     {
+        if(isExisting(img))
+        {
+            use=existingTiles.get(findExisting(img)).split(",")[1].toCharArray()[0];
+        }
+        else
+        {
+            newTiles.add(img+","+use);
+            Tools.bp("added new tile: "+img+" as "+use);
+        }
         GLtile tex = new GLtile("tl-"+img,x,y,use,type);
         tex.tag = img;
         Tools.p("["+(tiles.size()+1)+"] ld-> "+tex.tag);
@@ -387,6 +410,7 @@ public class TilemapEditor {
         } catch (Exception ignored) {}
         if(hasName)
         {
+            loadExisting();
             int q = 0;
             int w = 0;
             int e = 1;
@@ -486,9 +510,49 @@ public class TilemapEditor {
             createButton("mrk.png","mrk.png","mrk.png",170+42,700,"<>mrk");
 
             curSel = tiles.get(0);
+
+            Tools.bp(newTiles);
         }
 
 
+    }
+    //name,char
+    //example:
+    //  dor1,^
+    private static boolean isExisting(String name)
+    {
+        int at = findExisting(name);
+        if(at>0&&existingTiles.get(at).split(",")[0].equals(name))
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private static int findExisting(String name)
+    {
+        int i = 0;
+        for(String a : existingTiles)
+        {
+
+            String[] br = a.split(",");
+            if(br[0].equals(name))
+            {
+                return i;
+            }
+            i++;
+        }
+        return -1;
+    }
+
+    private static void loadExisting() throws IOException
+    {
+        String path = "src\\Assets\\Art\\Tiles\\";
+        Scanner in = new Scanner(new FileReader(path+"tiles.txt"));
+        while(in.hasNextLine())
+        {
+            existingTiles.add(in.nextLine());
+        }
     }
 
     private static void SET_TILES() throws IOException
@@ -774,7 +838,7 @@ public class TilemapEditor {
                                 for (GLtile ignored : b)
                                 {
                                     if(e==1)
-                                      {
+                                    {
                                         grid[e-1][q][w] = new GLtile("tl-default.png", w * 32 + 50, q * 32 + 50, (char) 10000000, '*');
                                     }
                                     else{
@@ -1063,171 +1127,171 @@ public class TilemapEditor {
         int x = 0;
         int y = 0;
 
-            for(GLtile[] a : grid[cL])
+        for(GLtile[] a : grid[cL])
+        {
+            for(GLtile b : a)
             {
-                for(GLtile b : a)
+                if(b==null)
                 {
-                    if(b==null)
-                    {
-                        break;
-                    }
-                    if(!java.util.Objects.equals(b.tag, "def")&& b.spread)
-                    {
-                        GLtile sub = new GLtile("default.png",-100,-100,(char)1,'*');
-
-                        GLtile up   = sub;
-                        GLtile uplf = sub;
-                        GLtile dn   = sub;
-                        GLtile dnrt = sub;
-                        GLtile lf   = sub;
-                        GLtile dnlf = sub;
-                        GLtile rt   = sub;
-                        GLtile uprt = sub;
-                        try{ up   = grid[cL][y-1][x];}  catch (Exception ignored){}
-                        try{ uplf = grid[cL][y-1][x-1];}catch (Exception ignored){}
-                        try{ dn   = grid[cL][y+1][x];}  catch (Exception ignored){}
-                        try{ dnrt = grid[cL][y+1][x+1];}catch (Exception ignored){}
-                        try{ lf   = grid[cL][y][x-1];}  catch (Exception ignored){}
-                        try{ dnlf = grid[cL][y+1][x-1];}catch (Exception ignored){}
-                        try{ rt   = grid[cL][y][x+1];}  catch (Exception ignored){}
-                        try{ uprt = grid[cL][y-1][x+1];}catch (Exception ignored){}
-                        String m = b.me;
-                        String u = up.me;
-                        String d = dn.me;
-                        String l = lf.me;
-                        String r = rt.me;
-                        String ul = uplf.me;
-                        String dr = dnrt.me;
-                        String dl = dnlf.me;
-                        String ur = uprt.me;
-                        boolean ta = m.equals(u);
-                        boolean tb = m.equals(d);
-                        boolean tc = m.equals(l);
-                        boolean td = m.equals(r);
-                        boolean te = m.equals(ul);
-                        boolean tf = m.equals(dr);
-                        boolean tg = m.equals(dl);
-                        boolean th = m.equals(ur);
-                        boolean fa = !m.equals(u);
-                        boolean fb = !m.equals(d);
-                        boolean fc = !m.equals(l);
-                        boolean fd = !m.equals(r);
-                        boolean fe = !m.equals(ul);
-                        boolean ff = !m.equals(dr);
-                        boolean fg = !m.equals(dl);
-                        boolean fh = !m.equals(ur);
-                        String c = b.me;
-                        String s = "";
-                        for(char aa : c.toCharArray())
-                        {
-                            if(aa<=47||(aa>=58)) {
-                                s+=aa;
-                            }
-                        }
-                        c = s;
-                        if(fa&&fb&&fc&&fd)
-                        {
-                            sT(b,"tl-"+c+"1");
-                        }
-                        else if(fa&&fb&&fc&&td)
-                        {
-                            sT(b,"tl-"+c+"2");
-                        }
-                        else if(fa&&tb&&fc&&fd)
-                        {
-                            sT(b,"tl-"+c+"3");
-                        }
-                        else if(fa&&fb&&tc&&fd)
-                        {
-                            sT(b,"tl-"+c+"4");
-                        }
-                        else if(ta&&fb&&fc&&fd)
-                        {
-                            sT(b,"tl-"+c+"5");
-                        }
-                        else if(ta&&fb&&fc&&td&&th)
-                        {
-                            sT(b,"tl-"+c+"6");
-                        }
-                        else if(fa&&tb&&fc&&td&&tf)
-                        {
-                            sT(b,"tl-"+c+"7");
-                        }
-                        else if(fa&&tb&&tc&&fd&&tg)
-                        {
-                            sT(b,"tl-"+c+"8");
-                        }
-                        else if(ta&&fb&&tc&&fd&&te)
-                        {
-                            sT(b,"tl-"+c+"9");
-                        }
-                        else if(tb&&tc&&fg&&fa&&fd)
-                        {
-                            sT(b,"tl-"+c+"21");
-                        }
-                        else if(ta&&tc&&fe&&fb&&fd)
-                        {
-                            sT(b,"tl-"+c+"22");
-                        }
-                        else if(ta&&td&&fh&&fc&&fb)
-                        {
-                            sT(b,"tl-"+c+"23");
-                        }
-                        else if(tb&&td&&ff&&fa&&fc)
-                        {
-                            sT(b,"tl-"+c+"24");
-                        }
-
-                        else if(ta&&tb&&fc&&td)
-                        {
-                            sT(b,"tl-"+c+"14");
-                        }
-                        else if(fa&&tb&&tc&&td)
-                        {
-                            sT(b,"tl-"+c+"15");
-                        }
-                        else if(ta&&tb&&tc&&fd)
-                        {
-                            sT(b,"tl-"+c+"16");
-                        }
-                        else if(ta&&fb&&tc&&td)
-                        {
-                            sT(b,"tl-"+c+"17");
-                        }
-                        else if(ta&&tb&&fc&&fd)
-                        {
-                            sT(b,"tl-"+c+"18");
-                        }
-                        else if(fa&&fb&&tc&&td)
-                        {
-                            sT(b,"tl-"+c+"19");
-                        }
-                        else if(ta&&tb&&tc&&td)
-                        {
-                            sT(b,"tl-"+c+"20");
-                        }
-                        else if(tb&&tc&&fg)
-                        {
-                            sT(b,"tl-"+c+"10");
-                        }
-                        else if(ta&&tc&&fe)
-                        {
-                            sT(b,"tl-"+c+"11");
-                        }
-                        else if(ta&&td&&fh)
-                        {
-                            sT(b,"tl-"+c+"12");
-                        }
-                        else if(tb&&td&&ff)
-                        {
-                            sT(b,"tl-"+c+"13");
-                        }
-                    }
-                    x++;
+                    break;
                 }
-                y++;
-                x = 0;
+                if(!java.util.Objects.equals(b.tag, "def")&& b.spread)
+                {
+                    GLtile sub = new GLtile("default.png",-100,-100,(char)1,'*');
+
+                    GLtile up   = sub;
+                    GLtile uplf = sub;
+                    GLtile dn   = sub;
+                    GLtile dnrt = sub;
+                    GLtile lf   = sub;
+                    GLtile dnlf = sub;
+                    GLtile rt   = sub;
+                    GLtile uprt = sub;
+                    try{ up   = grid[cL][y-1][x];}  catch (Exception ignored){}
+                    try{ uplf = grid[cL][y-1][x-1];}catch (Exception ignored){}
+                    try{ dn   = grid[cL][y+1][x];}  catch (Exception ignored){}
+                    try{ dnrt = grid[cL][y+1][x+1];}catch (Exception ignored){}
+                    try{ lf   = grid[cL][y][x-1];}  catch (Exception ignored){}
+                    try{ dnlf = grid[cL][y+1][x-1];}catch (Exception ignored){}
+                    try{ rt   = grid[cL][y][x+1];}  catch (Exception ignored){}
+                    try{ uprt = grid[cL][y-1][x+1];}catch (Exception ignored){}
+                    String m = b.me;
+                    String u = up.me;
+                    String d = dn.me;
+                    String l = lf.me;
+                    String r = rt.me;
+                    String ul = uplf.me;
+                    String dr = dnrt.me;
+                    String dl = dnlf.me;
+                    String ur = uprt.me;
+                    boolean ta = m.equals(u);
+                    boolean tb = m.equals(d);
+                    boolean tc = m.equals(l);
+                    boolean td = m.equals(r);
+                    boolean te = m.equals(ul);
+                    boolean tf = m.equals(dr);
+                    boolean tg = m.equals(dl);
+                    boolean th = m.equals(ur);
+                    boolean fa = !m.equals(u);
+                    boolean fb = !m.equals(d);
+                    boolean fc = !m.equals(l);
+                    boolean fd = !m.equals(r);
+                    boolean fe = !m.equals(ul);
+                    boolean ff = !m.equals(dr);
+                    boolean fg = !m.equals(dl);
+                    boolean fh = !m.equals(ur);
+                    String c = b.me;
+                    String s = "";
+                    for(char aa : c.toCharArray())
+                    {
+                        if(aa<=47||(aa>=58)) {
+                            s+=aa;
+                        }
+                    }
+                    c = s;
+                    if(fa&&fb&&fc&&fd)
+                    {
+                        sT(b,"tl-"+c+"1");
+                    }
+                    else if(fa&&fb&&fc&&td)
+                    {
+                        sT(b,"tl-"+c+"2");
+                    }
+                    else if(fa&&tb&&fc&&fd)
+                    {
+                        sT(b,"tl-"+c+"3");
+                    }
+                    else if(fa&&fb&&tc&&fd)
+                    {
+                        sT(b,"tl-"+c+"4");
+                    }
+                    else if(ta&&fb&&fc&&fd)
+                    {
+                        sT(b,"tl-"+c+"5");
+                    }
+                    else if(ta&&fb&&fc&&td&&th)
+                    {
+                        sT(b,"tl-"+c+"6");
+                    }
+                    else if(fa&&tb&&fc&&td&&tf)
+                    {
+                        sT(b,"tl-"+c+"7");
+                    }
+                    else if(fa&&tb&&tc&&fd&&tg)
+                    {
+                        sT(b,"tl-"+c+"8");
+                    }
+                    else if(ta&&fb&&tc&&fd&&te)
+                    {
+                        sT(b,"tl-"+c+"9");
+                    }
+                    else if(tb&&tc&&fg&&fa&&fd)
+                    {
+                        sT(b,"tl-"+c+"21");
+                    }
+                    else if(ta&&tc&&fe&&fb&&fd)
+                    {
+                        sT(b,"tl-"+c+"22");
+                    }
+                    else if(ta&&td&&fh&&fc&&fb)
+                    {
+                        sT(b,"tl-"+c+"23");
+                    }
+                    else if(tb&&td&&ff&&fa&&fc)
+                    {
+                        sT(b,"tl-"+c+"24");
+                    }
+
+                    else if(ta&&tb&&fc&&td)
+                    {
+                        sT(b,"tl-"+c+"14");
+                    }
+                    else if(fa&&tb&&tc&&td)
+                    {
+                        sT(b,"tl-"+c+"15");
+                    }
+                    else if(ta&&tb&&tc&&fd)
+                    {
+                        sT(b,"tl-"+c+"16");
+                    }
+                    else if(ta&&fb&&tc&&td)
+                    {
+                        sT(b,"tl-"+c+"17");
+                    }
+                    else if(ta&&tb&&fc&&fd)
+                    {
+                        sT(b,"tl-"+c+"18");
+                    }
+                    else if(fa&&fb&&tc&&td)
+                    {
+                        sT(b,"tl-"+c+"19");
+                    }
+                    else if(ta&&tb&&tc&&td)
+                    {
+                        sT(b,"tl-"+c+"20");
+                    }
+                    else if(tb&&tc&&fg)
+                    {
+                        sT(b,"tl-"+c+"10");
+                    }
+                    else if(ta&&tc&&fe)
+                    {
+                        sT(b,"tl-"+c+"11");
+                    }
+                    else if(ta&&td&&fh)
+                    {
+                        sT(b,"tl-"+c+"12");
+                    }
+                    else if(tb&&td&&ff)
+                    {
+                        sT(b,"tl-"+c+"13");
+                    }
+                }
+                x++;
             }
+            y++;
+            x = 0;
+        }
     }
 
     private static void sT(GLtile a, String img) throws IOException
