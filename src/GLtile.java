@@ -6,8 +6,6 @@ import org.newdawn.slick.opengl.TextureLoader;
 import org.newdawn.slick.util.ResourceLoader;
 
 import java.io.IOException;
-import java.util.ArrayList;
-
 
 public class GLtile {
 	private String image;
