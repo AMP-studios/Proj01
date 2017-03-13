@@ -50,14 +50,6 @@ public class Tools {
 	{
 		printing=false;
 	}
-
-	public static int[] toC(int pixel) {
-		int alpha = (pixel >> 24) & 0xff;
-		int red = (pixel >> 16) & 0xff;
-		int green = (pixel >> 8) & 0xff;
-		int blue = (pixel) & 0xff;
-		return new int[]{alpha, red, green, blue};
-	}
 	static String toLet(String a) {
 		if(a.matches("[a-zA-Z0-9]"))
 		{
