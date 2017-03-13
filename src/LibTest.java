@@ -78,6 +78,7 @@ public class LibTest {
 	private static ArrayList<GLenemy> enemies = new ArrayList<>();
 
 	private static ArrayList<String> existingTiles = new ArrayList<>();
+	private static ArrayList<String> newTiles = new ArrayList<>();
 
 	private static String path = "src\\Assets\\Art\\Tiles\\";
 	private static PrintWriter in;
@@ -91,8 +92,8 @@ public class LibTest {
 	 * @throws IOException if invalid path is specified
 	 */
 	public static void start() throws IOException , CustomUtils.AudioControllerException {
-		in = new PrintWriter(path+"tiles.txt","UTF-8");
-		loadExisting();
+		//in = new PrintWriter(path+"tiles.txt","UTF-8");
+
 		initGL(W,H);
 		init();
 		//createImage("whiteBack.png",0,0);
@@ -216,7 +217,7 @@ public class LibTest {
 		enemies.add(tex);
 	}
 
-	public static void createTile(String img, int x, int y, char use, char type) throws IOException
+	private static void createTile(String img, int x, int y, char use, char type) throws IOException
 	{
 		if(isExisting(img))
 		{
@@ -248,9 +249,12 @@ public class LibTest {
 	public static void init() throws IOException, CustomUtils.AudioControllerException {
 		try {
 
+
 			//createText("hello world",0,0,10);
 			doorCooldown.start();
 			createPlayer(200,200,100,250,1);
+			loadExisting();
+			Tools.p(existingTiles);
 			preload();
 			loadMapFromPreload("lvl1");
 			loadDoors();
@@ -306,9 +310,12 @@ public class LibTest {
 		Scanner in = new Scanner(new FileReader(path+"tiles.txt"));
 		while(in.hasNextLine())
 		{
-			existingTiles.add(in.nextLine());
+			String x = in.nextLine();
+			existingTiles.add(x);
+			Tools.bp(x);
 		}
 	}
+
 	public static GLtile findTile(char tag)
 	{
 		for(GLtile a :tiles)
