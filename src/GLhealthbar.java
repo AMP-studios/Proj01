@@ -1,9 +1,6 @@
 import java.io.IOException;
 import java.util.ArrayList;
 
-/**
- * Created by bodyi on 3/10/2017.
- */
 public class GLhealthbar {
     public int x;
     public int y;

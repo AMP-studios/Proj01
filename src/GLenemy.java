@@ -1,5 +1,4 @@
 import CustomUtils.Time;
-import com.sun.corba.se.impl.oa.toa.TOA;
 import org.lwjgl.opengl.GL11;
 import org.newdawn.slick.Color;
 import org.newdawn.slick.opengl.Texture;
@@ -9,11 +8,7 @@ import org.newdawn.slick.util.ResourceLoader;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.concurrent.ThreadPoolExecutor;
 
-/**
- * Created by bodyi on 2/9/2017.
- */
 public class GLenemy {
     boolean paused = false;
     double rate;

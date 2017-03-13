@@ -22,7 +22,7 @@ public class Tools {
 			System.out.print("\033[0m");
 	}
 
-	public static void bp(Object lp)
+	static void bp(Object lp)
 	{
 			System.out.println(lp);
 	}

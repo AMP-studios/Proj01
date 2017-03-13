@@ -1,5 +1,4 @@
 import CustomUtils.Time;
-import com.sun.corba.se.impl.oa.toa.TOA;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
@@ -9,13 +8,11 @@ import org.newdawn.slick.opengl.Texture;
 import org.newdawn.slick.opengl.TextureLoader;
 import org.newdawn.slick.util.ResourceLoader;
 
-import javax.tools.Tool;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-import static java.lang.System.*;
 import static org.lwjgl.opengl.GL11.*;
 //import static javax.swing.plaf.metal.MetalBumps.createBuffer;
 //import static org.lwjgl.opengl.WindowsDisplay.createIcon;
