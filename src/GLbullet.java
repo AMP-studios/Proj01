@@ -19,23 +19,23 @@ public class GLbullet{
 	double dY;
 	double damage;
 	int rad = 10;
-	boolean moving = false;
+	private boolean moving = false;
 	String dir = "";
 	boolean active = true;
-	int wait = 0;
-	private String pth = "Assets\\Art\\Tiles\\";
+	private int wait = 0;
 	ArrayList<Texture> frames = new ArrayList<>();
-	Texture texture;
+	private Texture texture;
 	private Time delay=new Time();
-	char cur = 0;
-	int pp =0;
-	char[] exe;
+	private char cur = 0;
+	private int pp =0;
+	private char[] exe;
 	double ZERO = 10E-324;
-	public GLbullet(int x, int y, String exe) throws IOException
+	GLbullet(int x, int y, String exe) throws IOException
 	{
 		this.x = x;
 		this.y = y;
-		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream(pth+"b-1.png"));
+		String pth = "Assets\\Art\\Tiles\\";
+		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream(pth +"b-1.png"));
 		this.exe = exe.toCharArray();
 		cur = this.exe[pp];
 		pp++;
