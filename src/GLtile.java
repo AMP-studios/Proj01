@@ -29,6 +29,7 @@ public class GLtile {
 	boolean iden = false;
 	private int renderDelay = 0;
 	public Time delay = new Time();
+	public String temp = "";
 	public GLtile(String path,int x, int y, char symbol, char type) throws IOException
 	{
 		pt = path;
