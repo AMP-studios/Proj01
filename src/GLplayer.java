@@ -1,3 +1,5 @@
+import CustomUtils.AudioController;
+import CustomUtils.AudioControllerException;
 import CustomUtils.Time;
 import org.lwjgl.opengl.GL11;
 import org.newdawn.slick.Color;
@@ -26,8 +28,9 @@ public class GLplayer {
 	ArrayList<String> names;
 	ArrayList<GLweapon> patt;
 	GLweapon curWeapon;
-	public GLplayer(int x, int y, double health, double speed, double rate) throws IOException
-	{
+	AudioController ac = new AudioController();
+	public GLplayer(int x, int y, double health, double speed, double rate) throws IOException, AudioControllerException {
+		ac.addSound("/src/Assets/Audio/SFX/AssaultRifle.wav","Shot");
 		this.rate = rate;
 		shootTimer=new Time();
 		shootTimer.start();
@@ -78,8 +81,7 @@ public class GLplayer {
 		return dir.get(idx);
 	}
 
-	public void render() throws IOException
-	{
+	public void render() throws IOException, AudioControllerException {
 		setTex();
 		Color.white.bind();
 		texture.bind();
@@ -100,8 +102,7 @@ public class GLplayer {
 		curWeapon.render();
 	}
 
-	public void updt()
-	{
+	public void updt() throws AudioControllerException {
 		if(shooting && shootTimer.getTime()>rate)
 		{
 			shoot();
@@ -110,8 +111,8 @@ public class GLplayer {
 		}
 	}
 
-	public void shoot()
-	{
+	public void shoot() throws AudioControllerException {
+		ac.playSoundEffect("Shot", 1.0);
 		curWeapon.step = "create";
 	}
 }
