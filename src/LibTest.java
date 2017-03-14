@@ -210,8 +210,7 @@ public class LibTest {
 		PLAYER = new GLplayer(x,y,health,speed,rate);
 	}
 
-	public static void createEnemy(int x, int y, double health, double speed, double rate) throws IOException
-	{
+	public static void createEnemy(int x, int y, double health, double speed, double rate) throws IOException, AudioControllerException {
 		GLenemy tex = new GLenemy(x,y,health,speed,rate);
 		enemies.add(tex);
 	}

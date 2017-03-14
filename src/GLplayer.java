@@ -28,7 +28,7 @@ public class GLplayer {
 	ArrayList<String> names;
 	ArrayList<GLweapon> patt;
 	GLweapon curWeapon;
-	AudioController ac = new AudioController();
+	private AudioController ac = new AudioController();
 	public GLplayer(int x, int y, double health, double speed, double rate) throws IOException, AudioControllerException {
 		ac.addSound("/src/Assets/Audio/SFX/AssaultRifle.wav","Shot");
 		this.rate = rate;
