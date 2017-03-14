@@ -29,9 +29,9 @@ public class GLtext {
 	}
 	private void write() throws IOException
 	{
-		char[] br = contents.toCharArray();
-		for(char aBr : br) {
-			createLetter(Tools.toLet(aBr), cX, cY, this.size);
+		String[] br = contents.split("");
+		for(String aBr : br) {
+			createLetter(Tools.toLet(""+aBr), cX, cY, this.size);
 		}
 	}
 
