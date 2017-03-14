@@ -216,17 +216,17 @@ public class GLinput {
                     }else if(prs==Keyboard.KEY_SPACE)
                     {
                         in.add(" ");
-                        letters.add(new GLimage(Tools.toLet(" "),in.size()*7+x,y+32-3,true));
+                        letters.add(new GLimage(Tools.toLet(' '),in.size()*7+x,y+32-3,true));
                     }
                     else if(prs==Keyboard.KEY_PERIOD)
                     {
                         in.add(".");
-                        letters.add(new GLimage(Tools.toLet("."),in.size()*7+x,y+32-3,true));
+                        letters.add(new GLimage(Tools.toLet('.'),in.size()*7+x,y+32-3,true));
                     }
                     else if(prs!=Keyboard.KEY_RSHIFT && prs!=Keyboard.KEY_LSHIFT)
                     {
                         in.add(uu);
-                        letters.add(new GLimage(Tools.toLet(uu),in.size()*7+x,y+32-3,true));
+                        letters.add(new GLimage(Tools.toLet(uu.charAt(0)),in.size()*7+x,y+32-3,true));
                     }
                 }
             }
