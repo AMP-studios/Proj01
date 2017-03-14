@@ -13,7 +13,7 @@ public class TileCreator {
     final static int CLEAR = 16777215;
     public static void main(String[] foo) throws IOException
     {
-        LoadPixel("build_border","build_outline", "rck");
+        LoadPixel("build_border","build_outline", "tox");
     }
 
     public static void flipHorz(int[][] a)

@@ -21,7 +21,9 @@ public class GLpreload {
 
     private  GLtile[][][] grid = new GLtile[3][640/32][800/32];
 
-    private ArrayList<String> existingTiles = new ArrayList<>();
+    public ArrayList<String> existingTiles = new ArrayList<>();
+
+    public ArrayList<String> newTiles = new ArrayList<>();
 
     private PrintWriter in;
 
@@ -51,25 +53,15 @@ public class GLpreload {
         return tiles.get(0);
     }
 
-    public void createTile(String img, int x, int y, char use, char type) throws IOException
+    private void createTile(String img, int x, int y, char use, char type) throws IOException
     {
-
         if(isExisting(img))
         {
             use=existingTiles.get(findExisting(img)).split(",")[1].toCharArray()[0];
         }
         else
         {
-            String newThing = img+","+use;
-            Tools.bp("added new tile: "+img+" as "+use);
-            for(String a : existingTiles)
-            {
-                in.print(a);
-                in.println();
-            }
-            in.print(newThing);
-            in.println();
-            existingTiles.add(newThing);
+            img = "-invis.png";
         }
         GLtile tex = new GLtile("tl-"+img,x,y,use,type);
         tex.tag = img;
@@ -123,7 +115,7 @@ public class GLpreload {
 
     public GLpreload(String name) throws IOException
     {
-        in = new PrintWriter(path+"tiles.txt","UTF-8");
+        //in = new PrintWriter(path+"tiles.txt","UTF-8");
         loadExisting();
         Tools.enablePrinting();
         Tools.p("preloading "+name);
