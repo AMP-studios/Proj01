@@ -1,3 +1,5 @@
+import CustomUtils.AudioController;
+import CustomUtils.AudioControllerException;
 import CustomUtils.Time;
 import org.lwjgl.opengl.GL11;
 import org.newdawn.slick.Color;
@@ -50,8 +52,10 @@ public class GLenemy {
     private GLimage pointer = new GLimage("pointer.png",-100,-100);
     public boolean alive;
     private GLhealthbar hpBar;
-    public GLenemy(int x, int y, double health, double speed, double rate) throws IOException
-    {
+
+    private AudioController ac = new AudioController();
+    public GLenemy(int x, int y, double health, double speed, double rate) throws IOException, AudioControllerException {
+    	ac.addSound("/src/Assets/Audio/SFX/AssaultRifle.wav","Shot");
         hpBar = new GLhealthbar(x,y,(int)health,50);
         hpBar.setTether(this);
         turnTime.start();
@@ -295,8 +299,7 @@ public class GLenemy {
         circle++;
     }
 
-    public void render() throws IOException
-    {
+    public void render() throws IOException, AudioControllerException {
         setTex();
         curWeapon.fcg = facing;
         curWeapon.x = (int)this.x;
@@ -328,8 +331,7 @@ public class GLenemy {
         this.moveDy = Math.sin(angle);
     }
 
-    public void updt() throws IOException
-    {
+    public void updt() throws IOException, AudioControllerException {
         updateDS();
         act();
         bulletCol();
@@ -350,8 +352,8 @@ public class GLenemy {
     }
 
 
-    public void shoot()
-    {
+    public void shoot() throws AudioControllerException {
+    	ac.playSoundEffect("Shot", 1.0);
         curWeapon.step = "create";
     }
 }
