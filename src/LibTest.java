@@ -1,3 +1,4 @@
+import CustomUtils.AudioControllerException;
 import CustomUtils.Time;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -205,8 +206,7 @@ public class LibTest {
 		text.add(tex);
 	}
 
-	public static void createPlayer(int x, int y, double health, double speed, double rate) throws IOException
-	{
+	public static void createPlayer(int x, int y, double health, double speed, double rate) throws IOException, AudioControllerException {
 		PLAYER = new GLplayer(x,y,health,speed,rate);
 	}
 
