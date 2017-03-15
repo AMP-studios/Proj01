@@ -15,6 +15,7 @@ public class GLtext {
 	public GLimage[] letters = new GLimage[666];
 	int curLet = 0;
 	int size;
+	String tag = "";
 	String contents;
 
 	public GLtext(String s, int x, int y, int size) throws IOException
@@ -50,13 +51,18 @@ public class GLtext {
 
 	}
 
-	public void render()
+
+	public void render() throws IOException
 	{
+		cX = x;
+		cY = y;
+		letters = new GLimage[666];
+		curLet = 0;
+		write();
 		for(GLimage letter : letters) {
 			if(letter!=null) {
 				letter.render();
 			}
-
 		}
 	}
 }

@@ -63,7 +63,12 @@ public class TilemapEditor{
     public static ArrayList<String> dWrite = new ArrayList<>();
     public static char tempChar = (char)9000+1; // OVER 9000
     public static int dA = 0;
-
+    private static boolean showCol = false;
+    private static boolean tileMode = true;
+    private static Time colShowTimer = new Time();
+    private static GLtile[][] enemyDraw = new GLtile[640/32][800/32];
+    private static String[][] colDraw = new String[640/32][800/32];
+    private static GLtile[][] colWrite = new GLtile[640/32][800/32];
     //currently variables to save player position to be removed later.
     public static int x = 200;
     public static int y = 100;
@@ -107,6 +112,8 @@ public class TilemapEditor{
 
     public static double dt;
 
+    public static ArrayList<String> newEnemies = new ArrayList<>();
+    public static ArrayList<String> existingEnemies = new ArrayList<>();
     public static ArrayList<String> existingTiles = new ArrayList<>();
     public static GLtile[][][] tempMap = new GLtile[3][640/32][800/32];
     public static String tempName = "";
@@ -139,6 +146,7 @@ public class TilemapEditor{
             if (Display.isCloseRequested()) {
                 String path = "src\\Assets\\Art\\Tiles\\";
                 PrintWriter in = new PrintWriter(path+"tiles.txt","UTF-8");
+                PrintWriter in2 = new PrintWriter(path+"enemies.txt","UTF-8");
                 for(String a : existingTiles)
                 {
                     in.print(a);
@@ -148,6 +156,16 @@ public class TilemapEditor{
                 {
                     in.print(a);
                     in.println();
+                }
+                for(String a : existingEnemies)
+                {
+                    in2.print(a);
+                    in2.println();
+                }
+                for(String a : newEnemies)
+                {
+                    in2.print(a);
+                    in2.println();
                 }
                 in.close();
                 Display.destroy();
@@ -316,9 +334,9 @@ public class TilemapEditor{
 
     private static void createTile(String img, int x, int y, char use, char type) throws IOException
     {
-        if(isExisting(img))
+        if(isExistingT(img))
         {
-            use=existingTiles.get(findExisting(img)).split(",")[1].toCharArray()[0];
+            use=existingTiles.get(findExistingT(img)).split(",")[1].toCharArray()[0];
         }
         else
         {
@@ -331,6 +349,24 @@ public class TilemapEditor{
         tiles.add(tex);
     }
 
+    private static void createEnemy(String img, int x, int y, char use, String script) throws IOException
+    {
+        if(isExistingT(img))
+        {
+            use=existingEnemies.get(findExistingE(img)).split(",")[1].toCharArray()[0];
+        }
+        else
+        {
+            newEnemies.add(img+","+use);
+            Tools.bp("added new enemy: "+img+" as "+use);
+        }
+        GLtile tex = new GLtile(img,x,y,use,'*');
+        tex.temp = script;
+        tex.tag = img;
+        Tools.p("["+(enemies.size()+1)+"] ld-> "+tex.tag);
+        enemies.add(tex);
+    }
+
     /**
      * Creates text with a size of @param size containing the string (s).
      * @param s the text to be  displayed
@@ -339,11 +375,12 @@ public class TilemapEditor{
      * @param size changes the size of text, minimum is 0
      * @throws IOException when improper path is given
      */
-    public static void createText(String s, int x, int y, int size) throws IOException
+    public static GLtext createText(String s, int x, int y, int size) throws IOException
     {
         GLtext tex = new GLtext(s,x,y,size);
         text.add(tex);
         currentText++;
+        return tex;
     }
 
     private static GLbutton findBut(String tag)
@@ -396,6 +433,7 @@ public class TilemapEditor{
                 createImage("mainBack.png",0,0);
                 saveDelay.start();
                 dpDelay.start();
+                colShowTimer.start();
             }
             else
             {
@@ -460,9 +498,30 @@ public class TilemapEditor{
                     aa++;
                 }
             }
-
             int p1 = 900;
             int p2 = 50;
+            String current2 = new java.io.File( "." ).getCanonicalPath();
+            File folder2 = new File(current2+"/src");
+            File[] listOfFiles2 = folder2.listFiles();
+            assert listOfFiles2!=null;
+            for(java.io.File listOfFile : listOfFiles2) {
+                if (listOfFile.isFile() && listOfFile.getName().startsWith("EN")) {
+                    Tools.bp("Loading enemy script: "+listOfFile.getName());
+                    createEnemy("enemyDefault.png",-100,-100,(char)(4000000+existingEnemies.size()+newEnemies.size()),listOfFile.getName());
+                    //marker
+                    GLtext snap = createText(listOfFile.getName().substring(0,9),p1+1,p2+1,0);
+                    GLbutton v = createButton("WhiteBox.png","WhiteBox.png","WhiteBox.png",p1,p2,listOfFile.getName());
+                    v.innocent = false;
+                    v.isEnemy = true;
+                    snap.tag = listOfFile.getName();
+                    p2 += 32+10;
+
+                }
+            }
+
+            p1 = 900;
+            p2 = 50;
+
             GLbutton cur_b;
             int i = 0;
             for(String a:names)
@@ -471,6 +530,8 @@ public class TilemapEditor{
                 if(a.startsWith("tl--"))
                 {
                     cur_b = createButton(a,a,a,p1,p2,a);
+                    cur_b.isEnemy=false;
+                    cur_b.innocent = false;
                     p2 += 32+10;
                     i++;
                     if(i == 1)
@@ -485,7 +546,7 @@ public class TilemapEditor{
 
             }
 
-            int m1 = 40;
+            int m1 = -120;
 
             createButton("bUp.png","bUp.png","bUp.png",940,10,"+++");
             createButton("bDown.png","bDown.png","bDown.png",940,700-32-10,"---");
@@ -506,6 +567,14 @@ public class TilemapEditor{
 
             createButton("mrk.png","mrk.png","mrk.png",170+42,700,"<>mrk");
 
+            createButton("bShowHide.png","bShowHide.png","bShowHide.png",380+80,10,"<>hide");
+            createButton("bShowCol.png","bShowCol.png","bShowCol.png",500,10,"<>show");
+
+
+            createButton("bEnem.png","bEnem.png","bEnem.png",540,10,"[E]");
+            createButton("bTiles.png","bTiles.png","bTiles.png",580,10,"[T]");
+
+
             curSel = tiles.get(0);
 
             Tools.bp(newTiles);
@@ -516,9 +585,9 @@ public class TilemapEditor{
     //name,char
     //example:
     //  dor1,^
-    private static boolean isExisting(String name)
+    private static boolean isExistingT(String name)
     {
-        int at = findExisting(name);
+        int at = findExistingT(name);
         if(at>0&&existingTiles.get(at).split(",")[0].equals(name))
         {
             return true;
@@ -526,10 +595,36 @@ public class TilemapEditor{
         return false;
     }
 
-    private static int findExisting(String name)
+    private static boolean isExistingE(String name)
+    {
+        int at = findExistingE(name);
+        if(at>0&&existingEnemies.get(at).split(",")[0].equals(name))
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private static int findExistingT(String name)
     {
         int i = 0;
         for(String a : existingTiles)
+        {
+
+            String[] br = a.split(",");
+            if(br[0].equals(name))
+            {
+                return i;
+            }
+            i++;
+        }
+        return -1;
+    }
+
+    private static int findExistingE(String name)
+    {
+        int i = 0;
+        for(String a : existingEnemies)
         {
 
             String[] br = a.split(",");
@@ -546,9 +641,14 @@ public class TilemapEditor{
     {
         String path = "src\\Assets\\Art\\Tiles\\";
         Scanner in = new Scanner(new FileReader(path+"tiles.txt"));
+        Scanner in2 = new Scanner(new FileReader(path+"enemies.txt"));
         while(in.hasNextLine())
         {
             existingTiles.add(in.nextLine());
+        }
+        while(in2.hasNextLine())
+        {
+            existingEnemies.add(in2.nextLine());
         }
     }
 
@@ -642,7 +742,11 @@ public class TilemapEditor{
                 {
                     for(GLbutton b : buttons)
                     {
-                        if(b.tag.startsWith("tl-")&&!b.spec.equals("lie"))
+                        if(b.tag.startsWith("tl-")&&!b.spec.equals("lie")&&tileMode)
+                        {
+                            b.y+=num/10;
+                        }
+                        if(b.tag.startsWith("EN")&&!tileMode)
                         {
                             b.y+=num/10;
                         }
@@ -700,14 +804,29 @@ public class TilemapEditor{
                         }
                         else if(!outDoorSel)
                         {
-                            String[] k = a.tag.split(":");
-                            int gx = Integer.parseInt(k[1]);
-                            int gy = Integer.parseInt(k[2]);
-                            GLtile d = curSel;
-                            GLtile q = new GLtile("tl-"+d.tag,gx*32+50,gy*32+50,d.sm,d.tp);
-                            q.spread = curSel.spread;
-                            q.layer = cL;
-                            grid[cL][gy][gx] = q;
+                            if(tileMode)
+                            {
+                                String[] k = a.tag.split(":");
+                                int gx = Integer.parseInt(k[1]);
+                                int gy = Integer.parseInt(k[2]);
+                                GLtile d = curSel;
+                                GLtile q = new GLtile("tl-"+d.tag,gx*32+50,gy*32+50,d.sm,d.tp);
+                                q.spread = curSel.spread;
+                                q.layer = cL;
+                                grid[cL][gy][gx] = q;
+                            }
+                            else
+                            {
+                                String[] k = a.tag.split(":");
+                                int gx = Integer.parseInt(k[1]);
+                                int gy = Integer.parseInt(k[2]);
+                                GLtile d = curSel;
+                                GLtile q = new GLtile("enemyDefault.png",gx*32+50,gy*32+50,d.sm,d.tp);
+                                q.spread = curSel.spread;
+                                q.layer = cL;
+                                enemyDraw[gy][gx] = q;
+                            }
+
                         }
                         else if(outDoorSel&&dpDelay.getTime()>1000)
                         {
@@ -771,6 +890,7 @@ public class TilemapEditor{
                             dpDelay.start();
                         }
                     }
+                    //Tools.bp(a.tag+" : "+a.spec2);
                     if(a.tag.startsWith("+++"))
                     {
                         for(GLbutton b : buttons)
@@ -801,9 +921,27 @@ public class TilemapEditor{
                         curSel.tp = '@';
 
                     }
+                    if(a.tag.startsWith("<>show"))
+                    {
+                        collSquash();
+                        setColDraw();
+                        showCol = true;
+                    }
+                    if(a.tag.startsWith("<>hide"))
+                    {
+                        showCol = false;
+                    }
                     if(a.tag.startsWith("<>p"))
                     {
                         curSel.tp = '*';
+                    }
+                    if(a.tag.startsWith("[T]"))
+                    {
+                        tileMode = true;
+                    }
+                    if(a.tag.startsWith("[E]"))
+                    {
+                        tileMode = false;
                     }
                     if(a.tag.startsWith("[save]"))
                     {
@@ -913,6 +1051,60 @@ public class TilemapEditor{
             out.println(save.get(i));
         }
         out.println(s);
+    }
+
+    private static void collSquash()
+    {
+        int x = 0;
+        int y = 0;
+        for(GLtile[][] gr : grid)
+        {
+            for(GLtile[] a : gr)
+            {
+                for(GLtile b : a)
+                {
+                    if(colDraw[y][x]==null)
+                    {
+                        colDraw[y][x] = ""+b.tp;
+                    }
+                    else if(!colDraw[y][x].equals("#"))
+                    {
+                        colDraw[y][x] = ""+b.tp;
+                    }
+                    x++;
+                }
+                y++;
+                x = 0;
+            }
+            y=0;
+        }
+    }
+
+    private static void setColDraw() throws IOException
+    {
+        for(int y = 0; y < colDraw.length; y++)
+        {
+            for(int x = 0; x < colDraw[0].length; x++)
+            {
+                String cur = colDraw[y][x];
+                if(cur.equals("#"))
+                {
+                    colWrite[y][x]= new GLtile("mCol.png",x*32+50,y*32+50,'1','*');
+                }
+                else if(cur.equals("@"))
+                {
+                    colWrite[y][x]= new GLtile("mDor.png",x*32+50,y*32+50,'1','*');
+                }
+                else if(cur.equals("*"))
+                {
+                    colWrite[y][x]= new GLtile("mThru.png",x*32+50,y*32+50,'1','*');
+                }
+                else
+                {
+                    colWrite[y][x]= new GLtile("tl--invis.png",x*32+50,y*32+50,'1','*');
+                }
+            }
+        }
     }
 
     private static void SAVE() throws FileNotFoundException, UnsupportedEncodingException, IOException {
@@ -1063,6 +1255,14 @@ public class TilemapEditor{
     {
         if(hasName)
         {
+
+            if(showCol&& colShowTimer.getTime()>1000)
+            {
+                collSquash();
+                setColDraw();
+                colShowTimer.clear();
+                colShowTimer.start();
+            }
             //System.out.println(dt);
             for(GLimage image : images) {
                 image.render();
@@ -1071,8 +1271,24 @@ public class TilemapEditor{
                 pic.render();
             }
             for(GLbutton button : buttons) {
-                button.render();
-                button.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
+                if(tileMode)
+                {
+                    if(!button.isEnemy)
+                    {
+                        button.render();
+                        button.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
+                    }
+                }else
+                {
+                    if(button.isEnemy||button.innocent)
+                    {
+                        button.render();
+                        button.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
+                    }
+                }
+
+
+
                 if(button.tag.equals("<>mrk"))
                 {
                     GLbutton b = findBut("-l-"+(cL+1));
@@ -1098,9 +1314,46 @@ public class TilemapEditor{
                     }
                 }
             }
-
+            if(!tileMode)
+            {
+                for(GLtile[] a : enemyDraw)
+                {
+                    for(GLtile b : a)
+                    {
+                        if(b!=null)
+                        {
+                            b.render();
+                        }
+                    }
+                }
+            }
+            if(showCol)
+            {
+               for(GLtile[] a : colWrite)
+               {
+                   for(GLtile b : a)
+                   {
+                       b.render();
+                   }
+               }
+            }
             for(GLtext aText : text) {
-                aText.render();
+                if(tileMode)
+                {
+                    if(!aText.tag.startsWith("EN"))
+                    {
+                        aText.render();
+                    }
+                }else{
+                    if(aText.tag.startsWith("EN"))
+                    {
+                        GLbutton a = findBut(aText.tag);
+                        aText.x = a.x+1;
+                        aText.y = a.y+1;
+                    }
+                    aText.render();
+                }
+
             }
         }
 
