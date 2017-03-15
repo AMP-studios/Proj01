@@ -84,6 +84,7 @@ public class GLenemy {
         int a = 0;
         pth="Assets\\Art\\Tiles\\";
         dir=new java.util.ArrayList<>();
+        texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream(pth+"default.png"));
         for( String s : names)
         {
             Texture e = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream(pth+s));
@@ -235,6 +236,11 @@ public class GLenemy {
         return true;
     }
 
+    public void addImage(String name) throws IOException
+    {
+        texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream(pth + name));
+    }
+
     public void bulletCol()
     {
         GLplayer me = LibTest.PLAYER;
@@ -300,7 +306,7 @@ public class GLenemy {
     }
 
     public void render() throws IOException, AudioControllerException {
-        setTex();
+        //setTex();
         curWeapon.fcg = facing;
         curWeapon.x = (int)this.x;
         curWeapon.y = (int)this.y;

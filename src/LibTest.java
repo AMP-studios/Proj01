@@ -260,7 +260,7 @@ public class LibTest {
 			loadExisting();
 			Tools.p(existingTiles);
 			preload();
-			loadMapFromPreload("lvl1");
+			loadMapFromPreload("l1r0");
 			loadDoors();
 			createEnemy(100,200,2,2,1000);
 
