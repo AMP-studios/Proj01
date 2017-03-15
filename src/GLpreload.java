@@ -28,7 +28,7 @@ public class GLpreload {
     public ArrayList<String> newTiles = new ArrayList<>();
 
     private PrintWriter in;
-
+    private String[][] colDraw = new String[640/32][800/32];
     private String path = "src\\Assets\\Art\\Tiles\\";
 
     public ArrayList<Object> enemies = new ArrayList<>();
@@ -63,6 +63,51 @@ public class GLpreload {
         enemies.add(object);
     }
 
+    private void collSquash()
+    {
+        colDraw = new String[640/32][800/32];
+        int x = 0;
+        int y = 0;
+        for(GLtile[][] gr : grid)
+        {
+            for(GLtile[] a : gr)
+            {
+                for(GLtile b : a)
+                {
+                    if(colDraw[y][x]==null)
+                    {
+                        colDraw[y][x] = ""+b.tp;
+                    }
+                    else if(!colDraw[y][x].equals("#"))
+                    {
+                        colDraw[y][x] = ""+b.tp;
+                    }
+                    x++;
+                }
+                y++;
+                x = 0;
+            }
+            y=0;
+        }
+        addColl();
+    }
+
+    private void addColl()
+    {
+        int y = 0;
+        int x = 0;
+        for(String[] a : colDraw)
+        {
+            for(String b : a)
+            {
+                grid[1][y][x].tp=colDraw[y][x].toCharArray()[0];
+                x++;
+            }
+            y++;
+            x=0;
+
+        }
+    }
 
     private void createTile(String img, int x, int y, char use, char type) throws IOException
     {
@@ -242,5 +287,6 @@ public class GLpreload {
             z++;
         }
         Tools.p("finished loading");
+        collSquash();
     }
 }
