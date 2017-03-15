@@ -3,6 +3,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -29,6 +31,8 @@ public class GLpreload {
 
     private String path = "src\\Assets\\Art\\Tiles\\";
 
+    public ArrayList<Object> enemies = new ArrayList<>();
+
     private  GLtile findTile(String tag)
     {
 
@@ -52,6 +56,13 @@ public class GLpreload {
         }
         return tiles.get(0);
     }
+
+    private void addEnemy(String name, int x, int y) throws ClassNotFoundException, NoSuchMethodException, InstantiationException,IllegalAccessException,InvocationTargetException
+    {
+        Object object = Class.forName(name).getConstructor(String.class).newInstance(""+x+","+y);
+        enemies.add(object);
+    }
+
 
     private void createTile(String img, int x, int y, char use, char type) throws IOException
     {
@@ -94,8 +105,11 @@ public class GLpreload {
         return -1;
     }
 
-    private void loadExisting() throws IOException
+    private void loadExisting() throws IOException , ClassNotFoundException, NoSuchMethodException, InstantiationException,IllegalAccessException,InvocationTargetException
     {
+        Tools.bp(enemies);
+        //addEnemy("ENchicken",10,10);
+        Tools.bp(enemies);
         String path = "src\\Assets\\Art\\Tiles\\";
         Scanner in = new Scanner(new FileReader(path+"tiles.txt"));
         while(in.hasNextLine())
@@ -113,7 +127,9 @@ public class GLpreload {
         return grid;
     }
 
-    public GLpreload(String name) throws IOException
+
+    public GLpreload(String name) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException,IllegalAccessException,InvocationTargetException
+
     {
         //in = new PrintWriter(path+"tiles.txt","UTF-8");
         loadExisting();
@@ -168,6 +184,27 @@ public class GLpreload {
 
         Scanner in;
 
+        Scanner in4 = new Scanner(new FileReader(path+name+".ene"));
+
+        int y = 0;
+        int x = 0;
+        while(in4.hasNextLine())
+        {
+            String cur = in4.nextLine();
+            String[] br = cur.split(",");
+            for(int i = 0; i < br.length-1; i++)
+            {
+                if(!br[i].equals("none"))
+                {
+                    String cl = br[i].substring(0,br[i].indexOf('.'));
+                    addEnemy(cl,x*32,y*32);
+                }
+                x++;
+            }
+            y++;
+            x=0;
+        }
+        y=0;
         Scanner in2;
         q = 0;
         w = 0;

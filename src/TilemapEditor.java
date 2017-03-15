@@ -34,6 +34,7 @@ import static org.lwjgl.opengl.GL11.*;
 
 public class TilemapEditor{
     @SuppressWarnings("FieldCanBeLocal")
+    private static boolean toAutoSave = false;
     private static String tool = "pen";
     public static boolean outDoorSel = false;
     public static boolean isFullScreen=false;
@@ -68,10 +69,13 @@ public class TilemapEditor{
     private static Time colShowTimer = new Time();
     private static GLtile[][] enemyDraw = new GLtile[640/32][800/32];
     private static String[][] colDraw = new String[640/32][800/32];
+    private static ArrayList<String> BGM = new ArrayList<>();
     private static GLtile[][] colWrite = new GLtile[640/32][800/32];
     //currently variables to save player position to be removed later.
     public static int x = 200;
     public static int y = 100;
+
+    private static Time autosave = new Time();
 
     private static GLbutton tp;
     private static GLbutton bt;
@@ -112,8 +116,6 @@ public class TilemapEditor{
 
     public static double dt;
 
-    public static ArrayList<String> newEnemies = new ArrayList<>();
-    public static ArrayList<String> existingEnemies = new ArrayList<>();
     public static ArrayList<String> existingTiles = new ArrayList<>();
     public static GLtile[][][] tempMap = new GLtile[3][640/32][800/32];
     public static String tempName = "";
@@ -157,16 +159,7 @@ public class TilemapEditor{
                     in.print(a);
                     in.println();
                 }
-                for(String a : existingEnemies)
-                {
-                    in2.print(a);
-                    in2.println();
-                }
-                for(String a : newEnemies)
-                {
-                    in2.print(a);
-                    in2.println();
-                }
+
                 in.close();
                 Display.destroy();
                 System.exit(0);
@@ -351,15 +344,6 @@ public class TilemapEditor{
 
     private static void createEnemy(String img, int x, int y, char use, String script) throws IOException
     {
-        if(isExistingT(img))
-        {
-            use=existingEnemies.get(findExistingE(img)).split(",")[1].toCharArray()[0];
-        }
-        else
-        {
-            newEnemies.add(img+","+use);
-            Tools.bp("added new enemy: "+img+" as "+use);
-        }
         GLtile tex = new GLtile(img,x,y,use,'*');
         tex.temp = script;
         tex.tag = img;
@@ -420,6 +404,17 @@ public class TilemapEditor{
         return tiles.get(0);
     }
 
+    private static GLtile findEnemy(String script)
+    {
+        for(GLtile a :enemies) {
+            if(a.temp.equals(script))
+            {
+                return a;
+            }
+        }
+        return enemies.get(0);
+    }
+
     /**
      * This is used to load images into the game before the first update loop.
      * Things like backgrounds.
@@ -434,6 +429,7 @@ public class TilemapEditor{
                 saveDelay.start();
                 dpDelay.start();
                 colShowTimer.start();
+                autosave.start();
             }
             else
             {
@@ -507,7 +503,7 @@ public class TilemapEditor{
             for(java.io.File listOfFile : listOfFiles2) {
                 if (listOfFile.isFile() && listOfFile.getName().startsWith("EN")) {
                     Tools.bp("Loading enemy script: "+listOfFile.getName());
-                    createEnemy("enemyDefault.png",-100,-100,(char)(4000000+existingEnemies.size()+newEnemies.size()),listOfFile.getName());
+                    createEnemy("enemyDefault.png",-100,-100,(char)(26*237*33*29*3),listOfFile.getName());
                     //marker
                     GLtext snap = createText(listOfFile.getName().substring(0,9),p1+1,p2+1,0);
                     GLbutton v = createButton("WhiteBox.png","WhiteBox.png","WhiteBox.png",p1,p2,listOfFile.getName());
@@ -570,18 +566,21 @@ public class TilemapEditor{
             createButton("bShowHide.png","bShowHide.png","bShowHide.png",380+80,10,"<>hide");
             createButton("bShowCol.png","bShowCol.png","bShowCol.png",500,10,"<>show");
 
-
             createButton("bEnem.png","bEnem.png","bEnem.png",540,10,"[E]");
             createButton("bTiles.png","bTiles.png","bTiles.png",580,10,"[T]");
 
+            createButton("bAS.png","bAS.png","bAS.png",580+40,10,">AS");
+            createButton("bMS.png","bMS.png","bMS.png",580+80,10,">MS");
+
+
+            createButton("bSounds.png","bSounds.png","bSounds.png",580+120,10,">Sound");
 
             curSel = tiles.get(0);
 
             Tools.bp(newTiles);
         }
-
-
     }
+
     //name,char
     //example:
     //  dor1,^
@@ -589,16 +588,6 @@ public class TilemapEditor{
     {
         int at = findExistingT(name);
         if(at>0&&existingTiles.get(at).split(",")[0].equals(name))
-        {
-            return true;
-        }
-        return false;
-    }
-
-    private static boolean isExistingE(String name)
-    {
-        int at = findExistingE(name);
-        if(at>0&&existingEnemies.get(at).split(",")[0].equals(name))
         {
             return true;
         }
@@ -621,22 +610,6 @@ public class TilemapEditor{
         return -1;
     }
 
-    private static int findExistingE(String name)
-    {
-        int i = 0;
-        for(String a : existingEnemies)
-        {
-
-            String[] br = a.split(",");
-            if(br[0].equals(name))
-            {
-                return i;
-            }
-            i++;
-        }
-        return -1;
-    }
-
     private static void loadExisting() throws IOException
     {
         String path = "src\\Assets\\Art\\Tiles\\";
@@ -645,10 +618,6 @@ public class TilemapEditor{
         while(in.hasNextLine())
         {
             existingTiles.add(in.nextLine());
-        }
-        while(in2.hasNextLine())
-        {
-            existingEnemies.add(in2.nextLine());
         }
     }
 
@@ -764,7 +733,6 @@ public class TilemapEditor{
 
             }
 
-
             boolean load = false;
             GLbutton bb = buttons.get(0);
             for(GLbutton a: buttons)
@@ -776,11 +744,16 @@ public class TilemapEditor{
                     if(a.tag.startsWith("tl-"))
                     {
                         curSel = findTile(a.tag);
+
                         if(!a.spec.equals("lie"))
                         {
                             load = true;
                         }
                         bb = a;
+                    }
+                    if(a.tag.startsWith("EN"))
+                    {
+                        curSel = findEnemy(a.tag);
                     }
                     if(a.tag.startsWith("-+-:"))
                     {
@@ -823,6 +796,7 @@ public class TilemapEditor{
                                 GLtile d = curSel;
                                 GLtile q = new GLtile("enemyDefault.png",gx*32+50,gy*32+50,d.sm,d.tp);
                                 q.spread = curSel.spread;
+                                q.temp = curSel.temp;
                                 q.layer = cL;
                                 enemyDraw[gy][gx] = q;
                             }
@@ -943,6 +917,14 @@ public class TilemapEditor{
                     {
                         tileMode = false;
                     }
+                    if(a.tag.startsWith(">AS"))
+                    {
+                        toAutoSave = true;
+                    }
+                    if(a.tag.startsWith(">MS"))
+                    {
+                        toAutoSave = false;
+                    }
                     if(a.tag.startsWith("[save]"))
                     {
                         if(saveDelay.getTime()>1000)
@@ -1055,6 +1037,7 @@ public class TilemapEditor{
 
     private static void collSquash()
     {
+        colDraw = new String[640/32][800/32];
         int x = 0;
         int y = 0;
         for(GLtile[][] gr : grid)
@@ -1115,7 +1098,27 @@ public class TilemapEditor{
         PrintWriter out;
         PrintWriter out2;
         String curWrite = "";
+
+        PrintWriter out4 = new PrintWriter(path+name+".ene","UTF-8");
         PrintWriter out3 = new PrintWriter(path+"doors.txt","UTF-8");
+
+        for(GLtile[] l : enemyDraw)
+        {
+            for(GLtile e : l)
+            {
+                if(e==null)
+                {
+
+                    out4.print("none,");
+                }else{
+
+                    out4.print(e.temp+",");
+                }
+            }
+            out4.println();
+        }
+        out4.close();
+
         Tools.p("Doors:");
         Tools.bp(dWrite+"[][]");
         int move = 0;
@@ -1255,7 +1258,12 @@ public class TilemapEditor{
     {
         if(hasName)
         {
-
+            if(autosave.getTime()>15000&&toAutoSave)
+            {
+                SAVE();
+                autosave.clear();
+                autosave.start();
+            }
             if(showCol&& colShowTimer.getTime()>1000)
             {
                 collSquash();
