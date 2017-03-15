@@ -823,7 +823,7 @@ public class LibTest {
 		coll.clear();
 	}
 
-	public static int getDir(String spec)
+	private static int getDir(String spec)
 	{
 		String[] a = spec.split(":");
 		int ox = Integer.parseInt(a[1])+16;
