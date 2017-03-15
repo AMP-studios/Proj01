@@ -25,6 +25,8 @@ public class GLbutton {
 	private Texture b_click;
 
 	public String spec = "";
+	public boolean isEnemy = false;
+	public boolean innocent = true;
 
 	public String n_path;
 	public String h_path;

@@ -375,11 +375,12 @@ public class TilemapEditor{
      * @param size changes the size of text, minimum is 0
      * @throws IOException when improper path is given
      */
-    public static void createText(String s, int x, int y, int size) throws IOException
+    public static GLtext createText(String s, int x, int y, int size) throws IOException
     {
         GLtext tex = new GLtext(s,x,y,size);
         text.add(tex);
         currentText++;
+        return tex;
     }
 
     private static GLbutton findBut(String tag)
@@ -506,8 +507,15 @@ public class TilemapEditor{
             for(java.io.File listOfFile : listOfFiles2) {
                 if (listOfFile.isFile() && listOfFile.getName().startsWith("EN")) {
                     Tools.bp("Loading enemy script: "+listOfFile.getName());
-                    createEnemy("enemyDefault.png",p1,p2,(char)(4000000+existingEnemies.size()+newEnemies.size()),listOfFile.getName());
+                    createEnemy("enemyDefault.png",-100,-100,(char)(4000000+existingEnemies.size()+newEnemies.size()),listOfFile.getName());
+                    //marker
+                    GLtext snap = createText(listOfFile.getName().substring(0,9),p1+1,p2+1,0);
+                    GLbutton v = createButton("WhiteBox.png","WhiteBox.png","WhiteBox.png",p1,p2,listOfFile.getName());
+                    v.innocent = false;
+                    v.isEnemy = true;
+                    snap.tag = listOfFile.getName();
                     p2 += 32+10;
+
                 }
             }
 
@@ -522,6 +530,8 @@ public class TilemapEditor{
                 if(a.startsWith("tl--"))
                 {
                     cur_b = createButton(a,a,a,p1,p2,a);
+                    cur_b.isEnemy=false;
+                    cur_b.innocent = false;
                     p2 += 32+10;
                     i++;
                     if(i == 1)
@@ -732,7 +742,11 @@ public class TilemapEditor{
                 {
                     for(GLbutton b : buttons)
                     {
-                        if(b.tag.startsWith("tl-")&&!b.spec.equals("lie"))
+                        if(b.tag.startsWith("tl-")&&!b.spec.equals("lie")&&tileMode)
+                        {
+                            b.y+=num/10;
+                        }
+                        if(b.tag.startsWith("EN")&&!tileMode)
                         {
                             b.y+=num/10;
                         }
@@ -803,7 +817,14 @@ public class TilemapEditor{
                             }
                             else
                             {
-
+                                String[] k = a.tag.split(":");
+                                int gx = Integer.parseInt(k[1]);
+                                int gy = Integer.parseInt(k[2]);
+                                GLtile d = curSel;
+                                GLtile q = new GLtile("enemyDefault.png",gx*32+50,gy*32+50,d.sm,d.tp);
+                                q.spread = curSel.spread;
+                                q.layer = cL;
+                                enemyDraw[gy][gx] = q;
                             }
 
                         }
@@ -869,6 +890,7 @@ public class TilemapEditor{
                             dpDelay.start();
                         }
                     }
+                    //Tools.bp(a.tag+" : "+a.spec2);
                     if(a.tag.startsWith("+++"))
                     {
                         for(GLbutton b : buttons)
@@ -1233,6 +1255,7 @@ public class TilemapEditor{
     {
         if(hasName)
         {
+
             if(showCol&& colShowTimer.getTime()>1000)
             {
                 collSquash();
@@ -1248,8 +1271,24 @@ public class TilemapEditor{
                 pic.render();
             }
             for(GLbutton button : buttons) {
-                button.render();
-                button.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
+                if(tileMode)
+                {
+                    if(!button.isEnemy)
+                    {
+                        button.render();
+                        button.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
+                    }
+                }else
+                {
+                    if(button.isEnemy||button.innocent)
+                    {
+                        button.render();
+                        button.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
+                    }
+                }
+
+
+
                 if(button.tag.equals("<>mrk"))
                 {
                     GLbutton b = findBut("-l-"+(cL+1));
@@ -1275,6 +1314,19 @@ public class TilemapEditor{
                     }
                 }
             }
+            if(!tileMode)
+            {
+                for(GLtile[] a : enemyDraw)
+                {
+                    for(GLtile b : a)
+                    {
+                        if(b!=null)
+                        {
+                            b.render();
+                        }
+                    }
+                }
+            }
             if(showCol)
             {
                for(GLtile[] a : colWrite)
@@ -1286,7 +1338,22 @@ public class TilemapEditor{
                }
             }
             for(GLtext aText : text) {
-                aText.render();
+                if(tileMode)
+                {
+                    if(!aText.tag.startsWith("EN"))
+                    {
+                        aText.render();
+                    }
+                }else{
+                    if(aText.tag.startsWith("EN"))
+                    {
+                        GLbutton a = findBut(aText.tag);
+                        aText.x = a.x+1;
+                        aText.y = a.y+1;
+                    }
+                    aText.render();
+                }
+
             }
         }
 
