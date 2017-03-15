@@ -8,6 +8,7 @@ import org.newdawn.slick.opengl.ImageIOImageData;
 
 import javax.imageio.ImageIO;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -91,7 +92,8 @@ public class LibTest {
 	 * Usually this is where you would put anything you would want to happen every tick.
 	 * @throws IOException if invalid path is specified
 	 */
-	public static void start() throws IOException , CustomUtils.AudioControllerException {
+	public static void start() throws IOException , CustomUtils.AudioControllerException, ClassNotFoundException, NoSuchMethodException, InstantiationException,IllegalAccessException,InvocationTargetException
+	{
 		//in = new PrintWriter(path+"tiles.txt","UTF-8");
 
 		initGL(W,H);
@@ -215,6 +217,8 @@ public class LibTest {
 		enemies.add(tex);
 	}
 
+
+
 	private static void createTile(String img, int x, int y, char use, char type) throws IOException
 	{
 		if(isExisting(img))
@@ -231,7 +235,8 @@ public class LibTest {
 		tiles.add(tex);
 	}
 
-	public static void createPreload(String name) throws IOException
+	public static void createPreload(String name) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException,IllegalAccessException, InvocationTargetException
+
 	{
 		GLpreload tex = new GLpreload(name);
 		PRELOADS.add(tex);
@@ -244,19 +249,20 @@ public class LibTest {
 	 * Things like backgrounds.
 	 * @throws FileNotFoundException if a file not found exception occurs during GLimage creation.
 	 */
-	public static void init() throws IOException, CustomUtils.AudioControllerException {
+	public static void init() throws IOException, CustomUtils.AudioControllerException, ClassNotFoundException, NoSuchMethodException, InstantiationException,IllegalAccessException,InvocationTargetException
+	{
 		try {
 
 
 			//createText("hello world",0,0,10);
 			doorCooldown.start();
-			createPlayer(200,200,100,250,1);
+			createPlayer(200,200,100,250,100);
 			loadExisting();
 			Tools.p(existingTiles);
 			preload();
 			loadMapFromPreload("lvl1");
 			loadDoors();
-			createEnemy(100,200,1000,2,1000);
+			createEnemy(100,200,2,2,1000);
 
 
 		} catch (IOException e) {
@@ -388,7 +394,7 @@ public class LibTest {
 		return k;
 	}
 
-	public static void preload()throws IOException
+	public static void preload()throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException,IllegalAccessException,InvocationTargetException
 	{
 		ArrayList<String> maps = new ArrayList<>();
 		String current = new java.io.File( "." ).getCanonicalPath();
@@ -417,6 +423,10 @@ public class LibTest {
 			if(PRELOADS.get(i).getName().equals(name))
 			{
 				grid = PRELOADS.get(i).getGrid();
+				for(int q = 0; q < PRELOADS.get(i).enemies.size(); q++)
+				{
+					enemies.add((GLenemy)PRELOADS.get(i).enemies.get(q));
+				}
 				//Tools.bp("Scene move : "+name);
 				fail = false;
 			}
@@ -626,7 +636,8 @@ public class LibTest {
 	 * @param args ... they are args ...
 	 * @throws IOException if you suck at specifying file paths...
 	 */
-	public static void main(String[] args) throws IOException , CustomUtils.AudioControllerException
+	public static void main(String[] args) throws IOException , CustomUtils.AudioControllerException, ClassNotFoundException, NoSuchMethodException, InstantiationException,IllegalAccessException,InvocationTargetException
+
 	{
 		gameTime.start();
 		start();
@@ -823,7 +834,7 @@ public class LibTest {
 		coll.clear();
 	}
 
-	public static int getDir(String spec)
+	private static int getDir(String spec)
 	{
 		String[] a = spec.split(":");
 		int ox = Integer.parseInt(a[1])+16;
