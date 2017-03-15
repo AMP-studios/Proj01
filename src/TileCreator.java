@@ -9,11 +9,11 @@ import java.io.IOException;
 
 
 public class TileCreator {
-    final static int BLACK = -16777216;
-    final static int CLEAR = 16777215;
+    private final static int BLACK = -16777216;
+    private final static int CLEAR = 16777215;
     public static void main(String[] foo) throws IOException
     {
-        LoadPixel("build_border","build_outline", "woodplanks");
+        LoadPixel("build_border","build_outline", "solarpanel");
     }
 
     public static void flipHorz(int[][] a)
