@@ -1,9 +1,12 @@
+import CustomUtils.AudioController;
+import CustomUtils.AudioControllerException;
 import CustomUtils.Time;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.opengl.GL11;
+import org.newdawn.slick.openal.Audio;
 import org.newdawn.slick.opengl.Texture;
 import org.newdawn.slick.opengl.TextureLoader;
 import org.newdawn.slick.util.ResourceLoader;
@@ -34,6 +37,9 @@ import static org.lwjgl.opengl.GL11.*;
 
 public class TilemapEditor{
     @SuppressWarnings("FieldCanBeLocal")
+    private static String curMusic = "";
+    private static boolean onMusic = false;
+    private static AudioController ac = new AudioController();
     private static boolean toAutoSave = false;
     private static String tool = "pen";
     public static boolean outDoorSel = false;
@@ -518,6 +524,31 @@ public class TilemapEditor{
             p1 = 900;
             p2 = 50;
 
+            String current3 = new java.io.File( "." ).getCanonicalPath();
+            File folder3 = new File(current3+"/src/Assets/Audio/BGM");
+            File[] listOfFiles3 = folder3.listFiles();
+            assert listOfFiles3!=null;
+            for(java.io.File listOfFile : listOfFiles3) {
+                if (listOfFile.isFile()) {
+                    BGM.add(listOfFile.getName());
+                    //GLtext snap = createText(listOfFile.getName().substring(0,9),p1+1,p2+1,0);
+                    //snap.tag=listOfFile.getName();
+                    GLbutton v = createButton("WhiteBox.png","WhiteBox.png","WhiteBox.png",p1,p2,listOfFile.getName());
+                    v.spec2 = "music";
+                    GLbutton play = createButton("bSample1.png","bSample1.png","bSample1.png",p1,p2,"[play],"+listOfFile.getName());
+                    GLbutton stop = createButton("bSample2.png","bSample2.png","bSample2.png",p1,p2,"[stop],"+listOfFile.getName());
+                    play.spec2 = listOfFile.getName();
+                    stop.spec2 = listOfFile.getName();
+                    v.innocent = false;
+                    stop.innocent = false;
+                    play.innocent = false;
+                    ac.addSound("/src/Assets/Audio/BGM/"+listOfFile.getName(),listOfFile.getName());
+                }
+            }
+
+            p1 = 900;
+            p2 = 50;
+
             GLbutton cur_b;
             int i = 0;
             for(String a:names)
@@ -665,7 +696,7 @@ public class TilemapEditor{
      * Yes I know it's vague but that is what it is.
      * @throws IOException if a file not found exception occurs during GLimage creation.
      */
-    private static void UPDATE(double dt) throws IOException
+    private static void UPDATE(double dt) throws IOException, AudioControllerException
     {
         if(doorInput!=null)
         {
@@ -893,7 +924,18 @@ public class TilemapEditor{
                     if(a.tag.startsWith("<>d"))
                     {
                         curSel.tp = '@';
-
+                    }
+                    if(a.tag.startsWith(">Sound"))
+                    {
+                        onMusic = true;
+                    }
+                    if(a.tag.startsWith("[play]"))
+                    {
+                        ac.playMusic(a.tag.split(",")[1],1,true);
+                    }
+                    if(a.tag.startsWith("[stop]"))
+                    {
+                        ac.stopSound(a.tag.split(",")[1]);
                     }
                     if(a.tag.startsWith("<>show"))
                     {
@@ -912,10 +954,12 @@ public class TilemapEditor{
                     if(a.tag.startsWith("[T]"))
                     {
                         tileMode = true;
+                        onMusic = false;
                     }
                     if(a.tag.startsWith("[E]"))
                     {
                         tileMode = false;
+                        onMusic = false;
                     }
                     if(a.tag.startsWith(">AS"))
                     {
@@ -1281,18 +1325,19 @@ public class TilemapEditor{
             for(GLbutton button : buttons) {
                 if(tileMode)
                 {
-                    if(!button.isEnemy)
+                    if(!button.isEnemy&&!button.spec2.equals("music"))
                     {
                         button.render();
                         button.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
                     }
-                }else
+                }else if(!tileMode&&button.isEnemy||button.innocent&&!button.spec2.equals("music"))
                 {
-                    if(button.isEnemy||button.innocent)
-                    {
-                        button.render();
-                        button.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
-                    }
+                    button.render();
+                    button.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
+                }else if(!tileMode&&button.spec2.equals("music")||button.innocent)
+                {
+                    button.render();
+                    button.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
                 }
 
 
@@ -1322,7 +1367,7 @@ public class TilemapEditor{
                     }
                 }
             }
-            if(!tileMode)
+            if(!tileMode&&!onMusic)
             {
                 for(GLtile[] a : enemyDraw)
                 {
@@ -1352,7 +1397,7 @@ public class TilemapEditor{
                     {
                         aText.render();
                     }
-                }else{
+                }else if(!tileMode && !onMusic){
                     if(aText.tag.startsWith("EN"))
                     {
                         GLbutton a = findBut(aText.tag);
@@ -1360,6 +1405,14 @@ public class TilemapEditor{
                         aText.y = a.y+1;
                     }
                     aText.render();
+                }else if(onMusic && !tileMode)
+                {
+                    if(aText.tag.endsWith(".wav"))
+                    {
+                        GLbutton a = findBut(aText.tag);
+                        aText.x = a.x+1;
+                        aText.y = a.y+1;
+                    }
                 }
 
             }
