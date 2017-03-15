@@ -455,3 +455,4 @@ wood6.png,֢
 wood7.png,֣
 wood8.png,֤
 wood9.png,֥
+-bush.png,Ϫ

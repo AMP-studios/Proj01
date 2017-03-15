@@ -30,7 +30,7 @@ public class GLplayer {
 	GLweapon curWeapon;
 	private AudioController ac = new AudioController();
 	public GLplayer(int x, int y, double health, double speed, double rate) throws IOException, AudioControllerException {
-		ac.addSound("/src/Assets/Audio/SFX/AssaultRifle.wav","Shot");
+		ac.addSound("/src/Assets/Audio/SFX/Reload.wav","Shot");
 		this.rate = rate;
 		shootTimer=new Time();
 		shootTimer.start();
@@ -112,7 +112,7 @@ public class GLplayer {
 	}
 
 	public void shoot() throws AudioControllerException {
-		ac.playSoundEffect("Shot", 1.0);
+		ac.playSoundEffect("Shot", .5);
 		curWeapon.step = "create";
 	}
 }
