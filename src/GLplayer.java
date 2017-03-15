@@ -112,7 +112,7 @@ public class GLplayer {
 	}
 
 	public void shoot() throws AudioControllerException {
-		ac.playSoundEffect("Shot", 1.0);
+		ac.playSoundEffect("Shot", .5);
 		curWeapon.step = "create";
 	}
 }
