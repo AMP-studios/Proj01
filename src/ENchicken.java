@@ -12,5 +12,6 @@ public class ENchicken extends GLenemy{
     {
         super(Integer.parseInt(xy.split(",")[0]),Integer.parseInt(xy.split(",")[1]),10,1,100);
         Tools.bp("spawned enemy at "+xy);
+        addImage("tl--mutantchicken.png");
     }
 }

@@ -524,3 +524,5 @@ woodplanks6.png,ױ
 woodplanks7.png,ײ
 woodplanks8.png,׳
 woodplanks9.png,״
+-chicken.png,ϯ
+-mutantchicken.png,Ѐ

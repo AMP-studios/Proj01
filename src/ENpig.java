@@ -11,6 +11,6 @@ public class ENpig extends GLenemy
     {
         super(Integer.parseInt(xy.split(",")[0]),Integer.parseInt(xy.split(",")[1]),20,1,100);
         Tools.bp("spawned enemy at "+xy);
-        addImage("tl--pig.png");
+        addImage("tl--MutantPig.png");
     }
 }
