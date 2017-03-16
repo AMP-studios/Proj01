@@ -122,6 +122,8 @@ public class TilemapEditor{
 
     private static ArrayList<String> newTiles = new ArrayList<>();
 
+    private static ArrayList<String> oldDoors = new ArrayList<>();
+
     public static double dt;
 
     public static ArrayList<String> existingTiles = new ArrayList<>();
@@ -562,7 +564,9 @@ public class TilemapEditor{
                     cur_b = createButton(a,a,a,p1,p2,a);
                     cur_b.isEnemy=false;
                     cur_b.innocent = false;
-                    p2 += 32+10;
+                    String pth="Assets\\Art\\Tiles\\";
+                    Texture temp = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream(pth+a));
+                    p2 += temp.getImageHeight()+10;
                     i++;
                     if(i == 1)
                     {
@@ -648,7 +652,6 @@ public class TilemapEditor{
     {
         String path = "src\\Assets\\Art\\Tiles\\";
         Scanner in = new Scanner(new FileReader(path+"tiles.txt"));
-        Scanner in2 = new Scanner(new FileReader(path+"enemies.txt"));
         while(in.hasNextLine())
         {
             existingTiles.add(in.nextLine());
@@ -664,6 +667,7 @@ public class TilemapEditor{
         {
             String s = temp.nextLine();
             Tools.bp("existing door: "+s);
+            oldDoors.add(s);
             dA++;
         }
 
@@ -1183,6 +1187,10 @@ public class TilemapEditor{
         Tools.p("Doors:");
         Tools.bp(dWrite+"[][]");
         int move = 0;
+        for(String add: oldDoors)
+        {
+            out3.println(add);
+        }
         for(String add: dWrite)
         {
             out3.println(add);
@@ -1227,6 +1235,23 @@ public class TilemapEditor{
         int q = 0;
         int w = 0;
         int z = 0;
+        String path = "src\\Assets\\Art\\Tiles\\";
+        Scanner in2 = new Scanner(new FileReader(path+"enemies.txt"));
+        int y = 0;
+        int x = 0;
+        while(in2.hasNextLine())
+        {
+            String cur = in2.nextLine();
+            String[] br = cur.split(",");
+            for(int i = 0; i < br.length-1;i++)
+            {
+                enemyDraw[y][x]=new GLtile("enemyDefault.png",x*32+50,y*32+50,'x','x');
+                enemyDraw[y][x].temp=br[i];
+                x++;
+            }
+            x = 0;
+            y++;
+        }
         Tools.p("loading grid");
         for(GLtile[][] gr : grid)
         {
@@ -1253,10 +1278,9 @@ public class TilemapEditor{
             q = 0;
             z++;
         }
-        String path = "src\\Assets\\Scenes\\";
+        path = "src\\Assets\\Scenes\\";
 
         Scanner in;
-        Scanner in2;
         q = 0;
         w = 0;
         z = 0;

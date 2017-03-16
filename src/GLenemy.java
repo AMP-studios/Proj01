@@ -146,7 +146,7 @@ public class GLenemy {
             {
                 for(GLtile t : r)
                 {
-                    if(x>t.x&&y>t.y&&x<t.x+32&&y<t.y+32)
+                    if(t!=null&&x>t.x&&y>t.y&&x<t.x+32&&y<t.y+32)
                     {
                         return t;
                     }
@@ -159,6 +159,12 @@ public class GLenemy {
     public void die()
     {
         alive =false;
+        addPoints();
+    }
+
+    public void addPoints()
+    {
+        LibTest.SCORE += this.health*33+LibTest.rRn(1000,3000);
     }
 
     public static double round(double ipt)
@@ -194,16 +200,20 @@ public class GLenemy {
 
         for (GLtile[] a : grid[1]) {
             for (GLtile l : a) {
-                int x = l.x;
-                int y = l.y;
-                int px = (int) this.x + ct;
-                int py = (int) this.y + ct;
-                if ((l.tp + "").equals("#") && (x < px + si && x + si > px) && (y < py + si && y + si > py)) {
-                    String ip = "true:" + l.x + ":" + l.y;
-                    if (coll.contains(ip)) {
-                        coll.remove(ip);
+                if (l != null) {
+                    int x = l.x;
+                    int y = l.y;
+                    int px = (int) this.x + ct;
+                    int py = (int) this.y + ct;
+                    if ((l.tp + "").equals("#") && (x < px + si && x + si > px) && (y < py + si && y + si > py))
+                    {
+                        String ip = "true:" + l.x + ":" + l.y;
+                        if (coll.contains(ip))
+                        {
+                            coll.remove(ip);
+                        }
+                        return true;
                     }
-                    return true;
                 }
             }
         }
@@ -228,7 +238,7 @@ public class GLenemy {
         for(int i = 0; i < (int)dist; i++)
         {
             GLtile cur = tileAt((int)(mx*i+x),(int)(my*i+y));
-            if(cur.tp=='#')
+            if(cur!=null&&cur.tp=='#')
             {
                 return false;
             }

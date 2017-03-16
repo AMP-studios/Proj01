@@ -30,6 +30,7 @@ import static org.lwjgl.opengl.GL11.*;
  * */
 //jh
 public class LibTest {
+	public static int SCORE = 0;
 	private static boolean debug =false;
 	public static String Screen_state = "menu";
 	private static boolean isFullScreen=false;
@@ -201,10 +202,11 @@ public class LibTest {
 	 * @param size changes the size of text, minimum is 0
 	 * @throws IOException if an invalid path is specified
 	 */
-	public static void createText(String s, int x, int y, int size) throws IOException
+	public static GLtext createText(String s, int x, int y, int size) throws IOException
 	{
 		GLtext tex = new GLtext(s,x,y,size);
 		text.add(tex);
+		return tex;
 	}
 
 	private static void createPlayer(int x, int y, double health, double speed, double rate) throws IOException, AudioControllerException {
@@ -471,19 +473,25 @@ public class LibTest {
 		while(temp.hasNextLine())
 		{
 			String s = temp.nextLine();
-			Tools.bp("added door "+s);
-			String[] br = s.split(",");
-			//Cm,C1,C2,x,x,y,y,z,z,to,from
-			GLdoor door = new GLdoor(br[0].toCharArray()[0],br[1].toCharArray()[0],br[2].toCharArray()[0],
-								Integer.parseInt(br[3]),
-								Integer.parseInt(br[4]),
-								Integer.parseInt(br[5]),
-								Integer.parseInt(br[6]),
-								Integer.parseInt(br[7]),
-								Integer.parseInt(br[8]),
-								br[9],br[10]);
-			doors.add(door);
-			door.p();
+			if(!s.equals(""))
+			{
+				Tools.bp("added door "+s);
+				String[] br = s.split(",");
+				//Cm,C1,C2,x,x,y,y,z,z,to,from
+				if(br.length>1)
+				{
+					GLdoor door = new GLdoor(br[0].toCharArray()[0],br[1].toCharArray()[0],br[2].toCharArray()[0],
+							Integer.parseInt(br[3]),
+							Integer.parseInt(br[4]),
+							Integer.parseInt(br[5]),
+							Integer.parseInt(br[6]),
+							Integer.parseInt(br[7]),
+							Integer.parseInt(br[8]),
+							br[9],br[10]);
+					doors.add(door);
+					door.p();
+				}
+			}
 		}
 	}
 
@@ -583,6 +591,16 @@ public class LibTest {
 	 * @throws IOException if a file not found exception occurs during GLimage creation.
 	 */
 	private static void UPDATE(double dt) throws IOException {
+		if(Screen_state.equals("Game"))
+		{
+			for(GLtext t: text)
+			{
+				if(t.tag.equals("SCORE"))
+				{
+					t.contents = ""+SCORE;
+				}
+			}
+		}
 		if(PLAYER!=null)
 		{
 			PLAYER.curWeapon.paused =debug;
@@ -612,9 +630,13 @@ public class LibTest {
 		}
 		if(Screen_state.equals("loadFirstMap"))
 		{
-			createPlayer(200,200,100,1,100);
-			loadMapFromPreload("l1r0");
+
+			createPlayer(200,200,100,100,100);
+			createImage("scoreBox.png",0,0,">scoreBox");
+			GLtext temp = createText(""+SCORE,40,3,0);
+			temp.tag = ">SCORE";
 			Screen_state="Game";
+			loadMapFromPreload("l1r0");
 		}
 		for(GLtile image : images) {
 			image.render();
@@ -666,6 +688,13 @@ public class LibTest {
 
 		torem.clear();
 
+		for(GLtile image : images) {
+			if(image!=null&&image.tag!=null&&image.tag.startsWith(">"))
+			{
+				image.render();
+			}
+		}
+
 		for(GLtext aText : text) {
 			if(aText!=null){aText.render();}
 		}
@@ -673,6 +702,8 @@ public class LibTest {
 		{
 			PLAYER.render();
 		}
+
+
 
 
 	}
