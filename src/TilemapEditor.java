@@ -37,6 +37,7 @@ import static org.lwjgl.opengl.GL11.*;
 
 public class TilemapEditor{
     @SuppressWarnings("FieldCanBeLocal")
+    private static boolean playingMusic = false;
     private static String curMusic = "";
     private static boolean onMusic = false;
     private static AudioController ac = new AudioController();
@@ -535,10 +536,10 @@ public class TilemapEditor{
                     //snap.tag=listOfFile.getName();
                     GLbutton v = createButton("WhiteBox.png","WhiteBox.png","WhiteBox.png",p1,p2,listOfFile.getName());
                     v.spec2 = "music";
-                    GLbutton play = createButton("bSample1.png","bSample1.png","bSample1.png",p1,p2,"[play],"+listOfFile.getName());
-                    GLbutton stop = createButton("bSample2.png","bSample2.png","bSample2.png",p1,p2,"[stop],"+listOfFile.getName());
-                    play.spec2 = listOfFile.getName();
-                    stop.spec2 = listOfFile.getName();
+                    GLbutton play = createButton("bSample1.png","bSample1.png","bSample1.png",p1+66,p2,"[play],"+listOfFile.getName());
+                    GLbutton stop = createButton("bSample2.png","bSample2.png","bSample2.png",p1+66+11,p2,"[stop],"+listOfFile.getName());
+                    play.spec2 = "music";
+                    stop.spec2 = "music";
                     v.innocent = false;
                     stop.innocent = false;
                     play.innocent = false;
@@ -928,13 +929,15 @@ public class TilemapEditor{
                     {
                         onMusic = true;
                     }
-                    if(a.tag.startsWith("[play]"))
+                    if(a.tag.startsWith("[play]")&&!playingMusic)
                     {
                         ac.playMusic(a.tag.split(",")[1],1,true);
+                        playingMusic = true;
                     }
-                    if(a.tag.startsWith("[stop]"))
+                    if(a.tag.startsWith("[stop]")&&playingMusic)
                     {
                         ac.stopSound(a.tag.split(",")[1]);
+                        playingMusic = false;
                     }
                     if(a.tag.startsWith("<>show"))
                     {
@@ -1325,6 +1328,7 @@ public class TilemapEditor{
                 if(onMusic) {
                     if (button.spec2.equals("music")) {
                         button.render();
+                        button.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
                     }
                 }
                 if(tileMode)
@@ -1341,9 +1345,6 @@ public class TilemapEditor{
                         button.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
                     }
                 }
-
-
-
 
                 if(button.tag.equals("<>mrk"))
                 {

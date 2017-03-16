@@ -22,7 +22,6 @@ import java.util.Random;
  * */
 public class AudioController {
 	private java.util.HashMap<String, org.newdawn.slick.openal.Audio> sounds=new java.util.HashMap<>();
-
 	/**
 	 * This method adds audio to the ArrayList sounds, and gives them an alias for easier use, as well as initializing it to not playing.
 	 * @param fileLocation The string to a location of the file.
