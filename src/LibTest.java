@@ -64,7 +64,7 @@ public class LibTest {
 
 	private static ArrayList<GLtext> text = new ArrayList<>();
 
-	private static String curLevel = "lvl1";
+	private static String curLevel = "lr10";
 
 	public  static GLtile[][][] grid = new GLtile[3][640/32][800/32];
 
@@ -260,7 +260,7 @@ public class LibTest {
 			loadExisting();
 			Tools.p(existingTiles);
 			preload();
-			loadMapFromPreload("l1r3");
+			loadMapFromPreload("l1r0");
 			loadDoors();
 			createEnemy(100,200,2,2,1000);
 
