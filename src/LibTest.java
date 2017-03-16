@@ -5,8 +5,6 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 import org.newdawn.slick.opengl.ImageIOImageData;
-import org.newdawn.slick.opengl.TextureLoader;
-import org.newdawn.slick.util.ResourceLoader;
 
 import javax.imageio.ImageIO;
 import java.io.*;
@@ -49,7 +47,7 @@ public class LibTest {
 
 	GLtile[][] grid_T = new GLtile[H/32][W/32];
 
-	public static GLplayer PLAYER;
+	static GLplayer PLAYER;
 
 	//A stopwatch which holds the time since the game started
 	private static final Time gameTime=new Time();
@@ -68,7 +66,7 @@ public class LibTest {
 
 	private static String curLevel = "lr10";
 
-	public  static GLtile[][][] grid = new GLtile[3][640/32][800/32];
+	static GLtile[][][] grid = new GLtile[3][640/32][800/32];
 
 	private static ArrayList<GLtile> tiles = new ArrayList<>();
 
@@ -164,7 +162,7 @@ public class LibTest {
 	 * @param max maximum value to random.
 	 * @return returns a random between @param min and @param max.
 	 */
-	public static int rRn(int min, int max)
+	static int rRn(int min, int max)
 	{
 		return (int)(Math.random()*max)+min;
 	}
@@ -210,11 +208,11 @@ public class LibTest {
 		text.add(tex);
 	}
 
-	public static void createPlayer(int x, int y, double health, double speed, double rate) throws IOException, AudioControllerException {
+	private static void createPlayer(int x, int y, double health, double speed, double rate) throws IOException, AudioControllerException {
 		PLAYER = new GLplayer(x,y,health,speed,rate);
 	}
 
-	public static void createEnemy(int x, int y, double health, double speed, double rate) throws IOException, AudioControllerException {
+	private static void createEnemy(int x, int y, double health, double speed, double rate) throws IOException, AudioControllerException {
 		GLenemy tex = new GLenemy(x,y,health,speed,rate);
 		enemies.add(tex);
 	}
@@ -237,9 +235,7 @@ public class LibTest {
 		tiles.add(tex);
 	}
 
-	public static void createPreload(String name) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException,IllegalAccessException, InvocationTargetException
-
-	{
+	private static void createPreload(String name) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException,IllegalAccessException, InvocationTargetException {
 		GLpreload tex = new GLpreload(name);
 		PRELOADS.add(tex);
 	}
@@ -287,11 +283,7 @@ public class LibTest {
 	private static boolean isExisting(String name)
 	{
 		int at = findExisting(name);
-		if(at>0&&existingTiles.get(at).split(",")[0].equals(name))
-		{
-			return true;
-		}
-		return false;
+		return at > 0 && existingTiles.get(at).split(",")[0].equals(name);
 	}
 
 	private static int findExisting(String name)
@@ -322,7 +314,7 @@ public class LibTest {
 		}
 	}
 
-	public static GLtile findTile(char tag)
+	private static GLtile findTile(char tag)
 	{
 		for(GLtile a :tiles)
 		{
@@ -335,7 +327,7 @@ public class LibTest {
 	}
 
 
-	public static boolean chkCol() throws IOException
+	private static boolean chkCol() throws IOException
 	{
 		boolean k = false;
 		int q = 0;
@@ -368,23 +360,17 @@ public class LibTest {
 				{
 
 					//Tools.bp(l.sm);
-					for(int i = 0; i < doors.size(); i++)
-					{
-						if(doors.get(i).me==l.sm)
-						{
-							GLdoor cur = doors.get(i);
-							if(!cur.to.equals(curLevel))
-							{
-								loadMapFromPreload(cur.to);
-								PLAYER.x = cur.x1*32;
-								PLAYER.y = cur.y1*32;
+					for (GLdoor door : doors) {
+						if (door.me == l.sm) {
+							if (!door.to.equals(curLevel)) {
+								loadMapFromPreload(door.to);
+								PLAYER.x = door.x1 * 32;
+								PLAYER.y = door.y1 * 32;
 								Tools.bp("forward load");
-							}
-							else
-							{
-								loadMapFromPreload(cur.from);
-								PLAYER.x = cur.x2*32;
-								PLAYER.y = cur.y2*32;
+							} else {
+								loadMapFromPreload(door.from);
+								PLAYER.x = door.x2 * 32;
+								PLAYER.y = door.y2 * 32;
 								Tools.bp("backward load");
 							}
 						}
@@ -397,7 +383,7 @@ public class LibTest {
 		return k;
 	}
 
-	public static void preload()throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException,IllegalAccessException,InvocationTargetException
+	private static void preload()throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException,IllegalAccessException,InvocationTargetException
 	{
 		ArrayList<String> maps = new ArrayList<>();
 		String current = new java.io.File( "." ).getCanonicalPath();
@@ -412,23 +398,19 @@ public class LibTest {
 			}
 		}
 
-		for(int i = 0; i< maps.size();i++)
-		{
-			createPreload(maps.get(i));
+		for (String map : maps) {
+			createPreload(map);
 		}
 	}
 
-	public static void loadMapFromPreload(String name)
+	private static void loadMapFromPreload(String name)
 	{
 		boolean fail = true;
-		for(int i=0; i < PRELOADS.size(); i++)
-		{
-			if(PRELOADS.get(i).getName().equals(name))
-			{
-				grid = PRELOADS.get(i).getGrid();
-				for(int q = 0; q < PRELOADS.get(i).enemies.size(); q++)
-				{
-					enemies.add((GLenemy)PRELOADS.get(i).enemies.get(q));
+		for (GLpreload PRELOAD : PRELOADS) {
+			if (PRELOAD.getName().equals(name)) {
+				grid = PRELOAD.getGrid();
+				for (int q = 0; q < PRELOAD.enemies.size(); q++) {
+					enemies.add((GLenemy) PRELOAD.enemies.get(q));
 				}
 				//Tools.bp("Scene move : "+name);
 				fail = false;
@@ -583,7 +565,7 @@ public class LibTest {
 	 * Yes I know it's vague but that is what it is. 
 	 * @throws IOException if a file not found exception occurs during GLimage creation.
 	 */
-	public static void UPDATE(double dt) throws IOException {
+	private static void UPDATE(double dt) throws IOException {
 		PLAYER.curWeapon.paused =debug;
 		
 	}
@@ -591,7 +573,7 @@ public class LibTest {
 	/**
 	 * Renders all GLimages in images[] and runs their updates their information.
 	 */
-	public static void RENDER(double dt) throws IOException , CustomUtils.AudioControllerException
+	private static void RENDER(double dt) throws IOException , CustomUtils.AudioControllerException
 	{
 
 
@@ -634,10 +616,7 @@ public class LibTest {
 			}
 		}
 
-		for(GLenemy e : torem)
-		{
-			enemies.remove(e);
-		}
+		enemies.removeAll(torem);
 
 		torem.clear();
 
