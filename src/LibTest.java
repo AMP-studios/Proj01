@@ -254,7 +254,7 @@ public class LibTest {
 
 			//createText("hello world",0,0,10);
 			doorCooldown.start();
-			createPlayer(200,200,100,250,100);
+			createPlayer(200,200,100,200,100);
 			loadExisting();
 			Tools.p(existingTiles);
 			preload();

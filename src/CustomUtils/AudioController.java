@@ -57,6 +57,7 @@ public class AudioController {
 	 * @param loop true if the music should loop, false if it should only play once.
 	 * @throws AudioControllerException if the music is already playing or if an invalid name is provided
 	 */
+	@SuppressWarnings("SameParameterValue")
 	public void playMusic(String name, double volume, boolean loop) throws AudioControllerException
 	{
 		Audio soundEffect;

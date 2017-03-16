@@ -59,7 +59,7 @@ public class GLplayer {
 		}
 		shooting=false;
 		patt=new java.util.ArrayList<>();
-		curWeapon=new GLweapon("a1:1:!#f4--f2=f1=--e");
+		curWeapon=new GLweapon("a1:1:!#f13--e");
 	}
 	public void setTex()
 	{
