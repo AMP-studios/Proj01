@@ -78,7 +78,7 @@ public class GLpreload {
                     {
                         colDraw[y][x] = ""+b.tp;
                     }
-                    else if(!colDraw[y][x].equals("#"))
+                    else if(!colDraw[y][x].equals("@")&&!colDraw[y][x].equals("#"))
                     {
                         colDraw[y][x] = ""+b.tp;
                     }

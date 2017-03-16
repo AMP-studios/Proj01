@@ -1323,24 +1323,24 @@ public class TilemapEditor{
                 pic.render();
             }
             for(GLbutton button : buttons) {
+                if(onMusic)
+                {
+                    if(button.spec2.equals())
+                }
                 if(tileMode)
                 {
-                    if(!button.isEnemy&&!button.spec2.equals("music"))
+                    if(!button.isEnemy)
                     {
                         button.render();
                         button.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
                     }
-                }else if(!tileMode&&button.isEnemy||button.innocent&&!button.spec2.equals("music"))
-                {
-                    button.render();
-                    button.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
-                }else if(!tileMode&&button.spec2.equals("music")||button.innocent)
-                {
-                    button.render();
-                    button.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
+                }else {
+                    if(!tileMode&&button.isEnemy||button.innocent)
+                    {
+                        button.render();
+                        button.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
+                    }
                 }
-
-
 
                 if(button.tag.equals("<>mrk"))
                 {
