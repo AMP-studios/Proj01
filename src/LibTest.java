@@ -5,6 +5,8 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 import org.newdawn.slick.opengl.ImageIOImageData;
+import org.newdawn.slick.opengl.TextureLoader;
+import org.newdawn.slick.util.ResourceLoader;
 
 import javax.imageio.ImageIO;
 import java.io.*;
@@ -349,6 +351,7 @@ public class LibTest {
 				int y = l.y;
 				int px = (int)PLAYER.x+ct;
 				int py = (int)PLAYER.y+ct;
+
 				if((l.tp+"").equals("#") && (x<px+si && x+si>px) && (y<py+si && y+si>py))
 				{
 					String ip = "true:"+l.x+":"+l.y;
@@ -601,7 +604,23 @@ public class LibTest {
 			{
 				for(GLtile l : a)
 				{
-					l.render();
+					if(l.tp=='@')
+					{
+						l.render();
+					}
+				}
+			}
+		}
+		for(GLtile[][] gr: grid)
+		{
+			for(GLtile[] a : gr)
+			{
+				for(GLtile l : a)
+				{
+					if(l.tp!='@')
+					{
+						l.render();
+					}
 				}
 			}
 		}

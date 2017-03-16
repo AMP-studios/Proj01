@@ -111,6 +111,7 @@ public class GLpreload {
 
     private void createTile(String img, int x, int y, char use, char type) throws IOException
     {
+
         if(isExisting(img))
         {
             use=existingTiles.get(findExisting(img)).split(",")[1].toCharArray()[0];
@@ -273,6 +274,10 @@ public class GLpreload {
                 {
                     GLtile t = findTile(sp[w]);
                     b = new GLtile("tl-"+t.tag,w*32,q*32,sp[w],sp2[w]);
+                    if(sp2[0]=='@')
+                    {
+                        b = new GLtile("tl--invis.png",w*32,q*32,sp[w],sp2[w]);
+                    }
                     if(b.sm!=(char)10000000)
                     {
                         grid[z][q][w] = b;
