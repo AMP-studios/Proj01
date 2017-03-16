@@ -895,7 +895,6 @@ public class TilemapEditor{
                             dpDelay.start();
                         }
                     }
-                    //Tools.bp(a.tag+" : "+a.spec2);
                     if(a.tag.startsWith("+++"))
                     {
                         for(GLbutton b : buttons)
@@ -1323,24 +1322,28 @@ public class TilemapEditor{
                 pic.render();
             }
             for(GLbutton button : buttons) {
-                if(onMusic)
-                {
-                    if(button.spec2.equals())
+                if(onMusic) {
+                    if (button.spec2.equals("music")) {
+                        button.render();
+                    }
                 }
                 if(tileMode)
                 {
-                    if(!button.isEnemy)
+                    if(!button.isEnemy&&!button.spec2.equals("music"))
                     {
                         button.render();
                         button.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
                     }
                 }else {
-                    if(!tileMode&&button.isEnemy||button.innocent)
+                    if(!tileMode&&button.isEnemy||button.innocent&&!button.spec2.equals("music"))
                     {
                         button.render();
                         button.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
                     }
                 }
+
+
+
 
                 if(button.tag.equals("<>mrk"))
                 {
@@ -1651,7 +1654,7 @@ public class TilemapEditor{
 
         if (Mouse.isButtonDown(0))
         {
-            //Tools.p(""+Mouse.getX()+" : "+(H-Mouse.getY()));
+            Tools.p(""+Mouse.getX()+" : "+(H-Mouse.getY()));
         }
         if (Mouse.isButtonDown(1)) {
 
