@@ -32,6 +32,25 @@ public class GLhealthbar {
         }
     }
 
+    public GLhealthbar(int x, int y, int health, int size, String grey, String red) throws IOException
+    {
+        notRen = size;
+        this.x = x;
+        this.y = y;
+        this.maxHp = health;
+        this.curHp = maxHp;
+        this.size = size;
+        ratio = size/maxHp;
+        for(int i = 0; i < size; i++)
+        {
+            back.add(new GLimage(grey,x+i,y));
+        }
+        for(int i = 0; i < size; i++)
+        {
+            bars.add(new GLimage(red,x+i,y));
+        }
+    }
+
 
     public void setTether(GLenemy t)
     {

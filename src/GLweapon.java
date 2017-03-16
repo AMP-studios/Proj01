@@ -235,18 +235,13 @@ public class GLweapon {
 	}
 	public void render() throws IOException
 	{
-		if(!paused)
-		{
-			upPtt();
-		}
+		upPtt();
+
 		ArrayList<GLbullet> toRemove =new ArrayList<>();
 		for(GLbullet b : bullets)
 		{
 			b.render();
-			if(!paused)
-			{
-				b.update();
-			}
+			b.update();
 			if(!b.active)
 			{
 				toRemove.add(b);

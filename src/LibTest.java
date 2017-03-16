@@ -261,11 +261,14 @@ public class LibTest {
 			doorCooldown.start();
 			loadExisting();
 			Tools.p(existingTiles);
+			AudioController ac = new AudioController();
+			ac.addSound("Assets/Audio/BGM/02 Here Comes the 8-bit Empire.wav", "loadmusic");
+			ac.playMusic("loadmusic",1.0,true);
 			preload();
 			loadMusic();
 			loadDoors();
 
-
+			ac.stopSound("loadmusic");
 			//createEnemy(100,200,2,2,1000);
 
 
@@ -595,7 +598,7 @@ public class LibTest {
 		{
 			for(GLtext t: text)
 			{
-				if(t.tag.equals("SCORE"))
+				if(t.tag.equals(">SCORE"))
 				{
 					t.contents = ""+SCORE;
 				}
@@ -630,23 +633,18 @@ public class LibTest {
 		}
 		if(Screen_state.equals("loadFirstMap"))
 		{
-
+			buttons.clear();
+			images.clear();
 			createPlayer(200,200,100,100,100);
+			Screen_state="Game";
+			loadMapFromPreload("l1r0");
 			createImage("scoreBox.png",0,0,">scoreBox");
 			GLtext temp = createText(""+SCORE,40,3,0);
 			temp.tag = ">SCORE";
-			Screen_state="Game";
-			loadMapFromPreload("l1r0");
-		}
-		for(GLtile image : images) {
-			image.render();
+
 		}
 
-		for(GLbutton b : buttons)
-		{
-			b.render();
-			b.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
-		}
+
 
 		for(GLtile[][] gr: grid)
 		{
@@ -684,9 +682,22 @@ public class LibTest {
 			}
 		}
 
+		//Tools.bp(SCORE);
+
 		enemies.removeAll(torem);
 
 		torem.clear();
+
+		for(GLtile image : images) {
+			image.render();
+		}
+
+		for(GLbutton b : buttons)
+		{
+			b.render();
+			b.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
+		}
+
 
 		for(GLtile image : images) {
 			if(image!=null&&image.tag!=null&&image.tag.startsWith(">"))

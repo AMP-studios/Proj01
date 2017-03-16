@@ -7,6 +7,7 @@ import org.newdawn.slick.opengl.Texture;
 import org.newdawn.slick.opengl.TextureLoader;
 import org.newdawn.slick.util.ResourceLoader;
 
+import javax.tools.Tool;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,17 +35,23 @@ public class GLenemy {
     String movement = "close";
     double moveDx = 0;
     double moveDy = 0;
+    private int currentFrame = 0;
     private boolean limit_L = false;
     private boolean limit_R = false;
     private boolean limit_U = false;
     private Time lookTimer = new Time();
     private int visionRange = 300;
     private boolean limit_D = false;
+    private int delay = 100;
+    private Time frameTimer = new Time();
     int nextMovePointIndex = 0;
     private Time collCd = new Time();
     private int ANGLE = 300;
+    private boolean pointsAdded = false;
     private Time turnTime = new Time();
     private int circle = 0;
+    private ArrayList<Texture> frames = new ArrayList<>();
+    private ArrayList<Texture> framesReg = new ArrayList<>();
     private int turn = 1000;
     private boolean playerInVision = false;
     private ArrayList<String> coll = new ArrayList<>();
@@ -58,6 +65,7 @@ public class GLenemy {
     	ac.addSound("/src/Assets/Audio/SFX/AssaultRifle.wav","Shot");
         hpBar = new GLhealthbar(x,y,(int)health,50);
         hpBar.setTether(this);
+        frameTimer.start();
         turnTime.start();
         collCd.start();
         alive = true;
@@ -93,7 +101,7 @@ public class GLenemy {
         }
         shooting=true;
         patt=new java.util.ArrayList<>();
-        curWeapon=new GLweapon("a9:3:!#f4=e");
+        curWeapon=new GLweapon("a1:3:!#f4=e");
         setGrid(LibTest.grid);
         //getNextPoint();
     }
@@ -159,7 +167,6 @@ public class GLenemy {
     public void die()
     {
         alive =false;
-        addPoints();
     }
 
     public void addPoints()
@@ -248,7 +255,17 @@ public class GLenemy {
 
     public void addImage(String name) throws IOException
     {
-        texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream(pth + name));
+        frames.add(TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream(pth + name)));
+    }
+
+    public void addRegular(String name) throws IOException
+    {
+        framesReg.add(TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream(pth + name)));
+    }
+
+    public void setAnimDelay(int d)
+    {
+        delay = d;
     }
 
     public void bulletCol()
@@ -269,42 +286,65 @@ public class GLenemy {
         }
     }
 
+    public void run()
+    {
+        this.x-=speed*5;
+        if(this.x < -40)
+        {
+            die();
+        }
+    }
+
     protected void act() throws IOException, AudioControllerException {
 
         if(health<=0)
         {
-            die();
+            run();
+            if(!pointsAdded)
+            {
+                if(framesReg.size()>0)
+                {
+                    frames=framesReg;
+                }
+                addPoints();
+                pointsAdded=true;
+            }
+
+        }
+        else
+        {
+            if(lookTimer.getTime()>10)
+            {
+                playerInVision = LOS(LibTest.PLAYER);
+                lookTimer.clear();
+                lookTimer.start();
+                //Tools.bp(playerInVision);
+            }
+            if(circle>=8)
+            {
+                turn = LibTest.rRn(100,4000);
+                circle = 0;
+            }
+            if(turnTime.getTime()>turn)
+            {
+                turn();
+                turnTime.clear();
+                turnTime.start();
+            }
+            if(collCd.getTime()>100&&chkCol())
+            {
+                turn();
+                turn();
+                collCd.clear();
+                collCd.start();
+            }
+            for(String a : coll)
+            {
+                getDir(a);
+            }
         }
         //mark010
-        if(lookTimer.getTime()>0)
-        {
-            playerInVision = LOS(LibTest.PLAYER);
-            lookTimer.clear();
-            lookTimer.start();
-            Tools.bp(playerInVision);
-        }
-        if(circle>=8)
-        {
-            turn = LibTest.rRn(100,4000);
-            circle = 0;
-        }
-        if(turnTime.getTime()>turn)
-        {
-            turn();
-            turnTime.clear();
-            turnTime.start();
-        }
-        if(collCd.getTime()>100&&chkCol())
-        {
-            turn();
-            turn();
-            collCd.clear();
-            collCd.start();
-        }
-        for(String a : coll)
-        {
-            getDir(a);
-        }
+
 
     }
 
@@ -314,27 +354,109 @@ public class GLenemy {
         circle++;
     }
 
+    public String playerIs(GLplayer me)
+    {
+        try {
+            double dx = me.x-x;
+            double dy = me.y-y;
+            double dist = distTo((int)x,(int)y,(int)me.x,(int)me.y);
+            int quadrant = 1;
+            if(!isp(dx)&&isp(dy))
+            {
+                quadrant = 2;
+            }
+            if(!isp(dx)&&!isp(dy))
+            {
+                quadrant = 3;
+            }
+            if(isp(dx)&&!isp(dy))
+            {
+                quadrant = 4;
+            }
+            double sin = dy/dist;
+            double ang = Math.toDegrees(Math.asin(sin));
+            ang =Math.abs(ang);
+            if(quadrant==3)
+            {
+                ang = 180-ang;
+            }
+            else if(quadrant==2)
+            {
+                ang = 180+ang;
+            }
+            else if(quadrant==1)
+            {
+                ang = 360-ang;
+            }
+
+            //Tools.bp(ang);
+
+            if(ang<45&&ang>0||ang>315&&ang<360)
+            {
+                return "right";
+            }
+            else if(ang<135&& ang >45)
+            {
+                return "up";
+            }
+            else if(ang< 225&& ang >135)
+            {
+                return "left";
+            }
+            else if(ang< 315&& ang >225)
+            {
+                return "down";
+            }
+        }
+        catch (Exception e)
+        {
+            Tools.bp(e);
+        }
+        return "up";
+    }
+
+    public boolean isp(double a)
+    {
+        if(a < 0)
+        {
+            return false;
+        }
+        return true;
+    }
+
     public void render() throws IOException, AudioControllerException {
         //setTex();
-        curWeapon.fcg = facing;
-        curWeapon.x = (int)this.x;
-        curWeapon.y = (int)this.y;
-        curWeapon.render();
-        hpBar.render();
-        Color.white.bind();
-        texture.bind();
-        GL11.glBegin(GL11.GL_QUADS);
-        GL11.glTexCoord2f(0,0);
-        GL11.glVertex2f((int)x,(int)y);
-        GL11.glTexCoord2f(1,0);
-        GL11.glVertex2f((int)x+texture.getTextureWidth(),(int)y) ;
-        GL11.glTexCoord2f(1,1);
-        GL11.glVertex2f((int)x+texture.getTextureWidth(),(int)y+texture.getTextureHeight());
-        GL11.glTexCoord2f(0,1);
-        GL11.glVertex2f((int)x,(int)y+texture.getTextureHeight());
-        GL11.glEnd();
-        updt();
-        pointer.render();
+        //Tools.bp(shooting);
+        //shooting = playerInVision;
+
+            if (!pointsAdded) {
+                hpBar.render();
+            }
+            if (frameTimer.getTime() > delay) {
+                currentFrame++;
+                currentFrame %= frames.size();
+                frameTimer.clear();
+                frameTimer.start();
+            }
+            texture = frames.get(currentFrame);
+            Color.white.bind();
+            texture.bind();
+            GL11.glBegin(GL11.GL_QUADS);
+            GL11.glTexCoord2f(0, 0);
+            GL11.glVertex2f((int) x, (int) y);
+            GL11.glTexCoord2f(1, 0);
+            GL11.glVertex2f((int) x + texture.getTextureWidth(), (int) y);
+            GL11.glTexCoord2f(1, 1);
+            GL11.glVertex2f((int) x + texture.getTextureWidth(), (int) y + texture.getTextureHeight());
+            GL11.glTexCoord2f(0, 1);
+            GL11.glVertex2f((int) x, (int) y + texture.getTextureHeight());
+            GL11.glEnd();
+            updt();
+            //pointer.render();
+            curWeapon.fcg = facing;
+            curWeapon.x = (int) this.x;
+            curWeapon.y = (int) this.y;
+            curWeapon.render();
 
     }
 
@@ -358,9 +480,14 @@ public class GLenemy {
         }
         if(shooting && shootTimer.getTime()>rate)
         {
-            shoot();
-            shootTimer.clear();
-            shootTimer.start();
+            if(playerInVision) {
+                facing = playerIs(LibTest.PLAYER);
+                Tools.bp("Poof");
+                shoot();
+                curWeapon.render();
+                shootTimer.clear();
+                shootTimer.start();
+            }
         }
         this.x+=moveDx;
         this.y+=moveDy;
@@ -368,7 +495,7 @@ public class GLenemy {
 
 
     public void shoot() throws AudioControllerException {
-    	ac.playSoundEffect("Shot", 1.0);
+    	ac.playSoundEffect("Shot", 0.1);
         curWeapon.step = "create";
     }
 }

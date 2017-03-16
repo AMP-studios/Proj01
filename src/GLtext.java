@@ -56,7 +56,7 @@ public class GLtext {
 	{
 		cX = x;
 		cY = y;
-		letters = new GLimage[666];
+		letters = new GLimage[66];
 		curLet = 0;
 		write();
 		for(GLimage letter : letters) {

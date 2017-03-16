@@ -1,6 +1,7 @@
 import CustomUtils.AudioController;
 import CustomUtils.AudioControllerException;
 import CustomUtils.Time;
+import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 import org.newdawn.slick.Color;
 import org.newdawn.slick.opengl.Texture;
@@ -28,6 +29,7 @@ public class GLplayer {
 	ArrayList<String> names;
 	ArrayList<GLweapon> patt;
 	GLweapon curWeapon;
+	GLhealthbar Hpbar;
 	private AudioController ac = new AudioController();
 	public GLplayer(int x, int y, double health, double speed, double rate) throws IOException, AudioControllerException {
 		ac.addSound("/src/Assets/Audio/SFX/Reload.wav","Shot");
@@ -38,6 +40,7 @@ public class GLplayer {
 		this.health = health;
 		this.speed = speed;
 		this.y = y;
+		Hpbar = new GLhealthbar(Display.getWidth()-300,Display.getHeight()-20,(int)health,300,"grey_bar1.png","red_bar1.png");
 		String current = new java.io.File( "." ).getCanonicalPath();
 		File folder = new File(current+"/src/Assets/Art/Tiles");
 		File[] listOfFiles = folder.listFiles();
@@ -83,6 +86,7 @@ public class GLplayer {
 
 	public void render() throws IOException, AudioControllerException {
 		setTex();
+		Hpbar.render();
 		Color.white.bind();
 		texture.bind();
 		GL11.glBegin(GL11.GL_QUADS);
@@ -108,6 +112,28 @@ public class GLplayer {
 			shoot();
 			shootTimer.clear();
 			shootTimer.start();
+		}
+		for(GLenemy e : LibTest.enemies)
+		{
+			bulletCol(e);
+		}
+	}
+
+	public void bulletCol(GLenemy e)
+	{
+		GLenemy me = e;
+		for(int i = 0; i < me.curWeapon.bullets.size(); i++)
+		{
+			GLbullet cur = me.curWeapon.bullets.get(i);
+			if(cur.x+16 > this.x && cur.x+16 < this.x + 32)
+			{
+				if(cur.y+16 > this.y && cur.y+16 < this.y+32 && cur.active)
+				{
+					cur.active = false;
+					health-=cur.damage;
+					Hpbar.subtract((int)cur.damage);
+				}
+			}
 		}
 	}
 
