@@ -728,6 +728,14 @@ public class LibTest {
 	public static void main(String[] args) throws IOException , CustomUtils.AudioControllerException, ClassNotFoundException, NoSuchMethodException, InstantiationException,IllegalAccessException,InvocationTargetException
 
 	{
+
+		try{
+			//Runtime.getRuntime().exec(new String[] {"java", "-Xmx1024m", "-jar", "MyApp.jar", "test"});
+			Runtime.getRuntime().exec(new String[] {"java", "-Djava.library.path=libs/", "-jar", "test1.jar", "test"});
+		}catch(Exception e)
+		{
+			e.printStackTrace();
+		}
 		gameTime.start();
 		start();
 	}
