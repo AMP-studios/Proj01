@@ -62,7 +62,7 @@ public class GLenemy {
 
     private AudioController ac = new AudioController();
     public GLenemy(int x, int y, double health, double speed, double rate) throws IOException, AudioControllerException {
-    	ac.addSound("/src/Assets/Audio/SFX/AssaultRifle.wav","Shot");
+    	ac.addSound("/src/Assets/Audio/SFX/ptoo.wav","Shot");
         hpBar = new GLhealthbar(x,y,(int)health,50);
         hpBar.setTether(this);
         frameTimer.start();
