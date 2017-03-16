@@ -1264,6 +1264,10 @@ public class TilemapEditor{
         for(GLtile[][] gr : grid)
         {
             in = new Scanner(new FileReader(path+name+"_"+z+".map"));
+            if(z==0)
+            {
+                curMusic = in.nextLine();
+            }
             Tools.p("opened "+path+name+"_"+z+".map");
             in2  = new Scanner(new FileReader(path+name+"_"+z+".col"));
             Tools.p("opened "+path+name+"_"+z+".col");

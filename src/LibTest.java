@@ -1,3 +1,4 @@
+import CustomUtils.AudioController;
 import CustomUtils.AudioControllerException;
 import CustomUtils.Time;
 import org.lwjgl.input.Keyboard;
@@ -7,6 +8,7 @@ import org.lwjgl.opengl.DisplayMode;
 import org.newdawn.slick.opengl.ImageIOImageData;
 
 import javax.imageio.ImageIO;
+import javax.tools.Tool;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
@@ -29,6 +31,7 @@ import static org.lwjgl.opengl.GL11.*;
 //jh
 public class LibTest {
 	private static boolean debug =false;
+	public static String Screen_state = "menu";
 	private static boolean isFullScreen=false;
 	//screen width and height controlling variables.
 	private static final int W = 800;
@@ -60,8 +63,6 @@ public class LibTest {
 
 	private static long lastUpdateTime=0;
 
-	private static ArrayList<GLimage> images = new ArrayList<>();
-
 	private static ArrayList<GLtext> text = new ArrayList<>();
 
 	private static String curLevel = "lr10";
@@ -70,9 +71,13 @@ public class LibTest {
 
 	private static ArrayList<GLtile> tiles = new ArrayList<>();
 
+	private static ArrayList<GLtile> images = new ArrayList<>();
+
 	private static ArrayList<String> names = new ArrayList<>();
 
 	private static ArrayList<String> coll = new ArrayList<>();
+
+	private static ArrayList<GLbutton> buttons = new ArrayList<>();
 
 	private static ArrayList<GLpreload> PRELOADS = new ArrayList<>();
 
@@ -80,6 +85,7 @@ public class LibTest {
 
 	private static ArrayList<String> existingTiles = new ArrayList<>();
 	private static ArrayList<String> newTiles = new ArrayList<>();
+	private static AudioController ac = new AudioController();
 
 	private static String path = "src\\Assets\\Art\\Tiles\\";
 	private static PrintWriter in;
@@ -174,24 +180,17 @@ public class LibTest {
 	 * @param y the y coordinate at which to create the GLimage.
 	 * @throws IOException if an invalid file path is specified.
 	 */
-	public static void createImage(String path, int x, int y) throws IOException
+	public static void createImage(String path, int x, int y, String tag) throws IOException
 	{
-		GLimage tex = new GLimage(path,x,y);
+		GLtile tex = new GLtile(path,x,y,'x','x');
 		images.add(tex);
 	}
 
-	/**
-	 * Creates an GLimage at the position [ @param x, @param y ] with the image @param path adding the @param tag to it
-	 * @param path the path of the image for the GLimage.
-	 * @param x the x coordinate at which to create the GLimage.
-	 * @param y the y coordinate at which to create the GLimage.
-	 * @param tag the tag to add to the GLimage
-	 * @throws IOException if an invalid file path is specified.
-	 */
-	public static void createImage(String path, int x, int y, String tag) throws IOException
+	private static GLbutton createButton(String normal, String hover, String click, int x, int y, String tag) throws IOException
 	{
-		GLimage tex = new GLimage(path,x,y,tag);
-		images.add(tex);
+		GLbutton tex = new GLbutton(normal,hover,click,x,y,tag);
+		buttons.add(tex);
+		return tex;
 	}
 
 	/**
@@ -217,7 +216,11 @@ public class LibTest {
 		enemies.add(tex);
 	}
 
+	public static void createImage(String name, int x, int y) throws IOException
+	{
+		GLtile tex = new GLtile(name,x,y,'x','x');
 
+	}
 
 	private static void createTile(String img, int x, int y, char use, char type) throws IOException
 	{
@@ -254,13 +257,14 @@ public class LibTest {
 
 			//createText("hello world",0,0,10);
 			doorCooldown.start();
-			createPlayer(200,200,100,200,100);
 			loadExisting();
 			Tools.p(existingTiles);
 			preload();
-			loadMapFromPreload("l1r0");
+			loadMusic();
 			loadDoors();
-			createEnemy(100,200,2,2,1000);
+
+
+			//createEnemy(100,200,2,2,1000);
 
 
 		} catch (IOException e) {
@@ -327,7 +331,7 @@ public class LibTest {
 	}
 
 
-	private static boolean chkCol() throws IOException
+	private static boolean chkCol() throws IOException, AudioControllerException
 	{
 		boolean k = false;
 		int q = 0;
@@ -403,17 +407,30 @@ public class LibTest {
 		}
 	}
 
-	private static void loadMapFromPreload(String name)
+	private static void loadMusic() throws AudioControllerException, IOException
+	{
+		for(GLpreload p : PRELOADS)
+		{
+			ac.addSound("/src/Assets/Audio/BGM/"+p.music,p.music);
+		}
+	}
+
+	private static void loadMapFromPreload(String name) throws AudioControllerException, IOException
 	{
 		boolean fail = true;
 		for (GLpreload PRELOAD : PRELOADS) {
 			if (PRELOAD.getName().equals(name)) {
 				grid = PRELOAD.getGrid();
+				enemies.clear();
 				for (int q = 0; q < PRELOAD.enemies.size(); q++) {
 					enemies.add((GLenemy) PRELOAD.enemies.get(q));
 				}
-				//Tools.bp("Scene move : "+name);
 				fail = false;
+				if(!ac.isPlaying(PRELOAD.music))
+				{
+					ac.stopAll();
+					ac.playMusic(PRELOAD.music,1,true);
+				}
 			}
 		}
 		if(!fail)
@@ -566,8 +583,19 @@ public class LibTest {
 	 * @throws IOException if a file not found exception occurs during GLimage creation.
 	 */
 	private static void UPDATE(double dt) throws IOException {
-		PLAYER.curWeapon.paused =debug;
-		
+		if(PLAYER!=null)
+		{
+			PLAYER.curWeapon.paused =debug;
+		}
+		for(GLbutton a : buttons)
+		{
+			if(a.click) {
+				if(a.tag.startsWith("[PLAY]"))
+				{
+					Screen_state="loadFirstMap";
+				}
+			}
+		}
 	}
 	
 	/**
@@ -576,17 +604,35 @@ public class LibTest {
 	private static void RENDER(double dt) throws IOException , CustomUtils.AudioControllerException
 	{
 
-
-		for(GLimage image : images) {
+		if(Screen_state.equals("menu"))
+		{
+			createImage("background_m.png",0,0,"back");
+			createButton("bPlay.png","bPlay.png","bPlay.png",300,420,"[PLAY]");
+			Screen_state = "awaitPlay";
+		}
+		if(Screen_state.equals("loadFirstMap"))
+		{
+			createPlayer(200,200,100,1,100);
+			loadMapFromPreload("l1r0");
+			Screen_state="Game";
+		}
+		for(GLtile image : images) {
 			image.render();
 		}
+
+		for(GLbutton b : buttons)
+		{
+			b.render();
+			b.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
+		}
+
 		for(GLtile[][] gr: grid)
 		{
 			for(GLtile[] a : gr)
 			{
 				for(GLtile l : a)
 				{
-					if(l.tp=='@')
+					if(l!=null&&l.tp=='@')
 					{
 						l.render();
 					}
@@ -599,7 +645,7 @@ public class LibTest {
 			{
 				for(GLtile l : a)
 				{
-					if(l.tp!='@')
+					if(l!=null&&l.tp!='@')
 					{
 						l.render();
 					}
@@ -610,7 +656,7 @@ public class LibTest {
 		for(GLenemy e : enemies)
 		{
 			e.render();
-			if(!e.alive)
+			if(e!=null &&!e.alive)
 			{
 				torem.add(e);
 			}
@@ -621,10 +667,13 @@ public class LibTest {
 		torem.clear();
 
 		for(GLtext aText : text) {
-			aText.render();
+			if(aText!=null){aText.render();}
+		}
+		if(PLAYER!=null)
+		{
+			PLAYER.render();
 		}
 
-		PLAYER.render();
 
 	}
  
@@ -649,7 +698,6 @@ public class LibTest {
 	 */
 	private static void INPUT(double dt) throws IOException , CustomUtils.AudioControllerException
 	{
-
 		if (Mouse.isButtonDown(0))
 		{
 
@@ -657,179 +705,182 @@ public class LibTest {
 		else if (Mouse.isButtonDown(1)) {
 
 		}
-
-		if(Keyboard.isKeyDown(Keyboard.KEY_3))
+		if(PLAYER!=null&&Screen_state.equals("Game"))
 		{
-			for(int i=0; i < PRELOADS.size(); i++) {
-				Tools.bp(PRELOADS.get(i).getName());
-			}
-		}
-
-		if(Keyboard.isKeyDown(Keyboard.KEY_4))
-		{
-
-		}
-
-		if(Keyboard.isKeyDown(Keyboard.KEY_1))
-		{
-			debug = true;
-		}
-		if(Keyboard.isKeyDown(Keyboard.KEY_2))
-		{
-			debug = false;
-		}
-
-		String q = "";
-
-		boolean W = Keyboard.isKeyDown(Keyboard.KEY_W);
-		boolean S = Keyboard.isKeyDown(Keyboard.KEY_S);
-		boolean A = Keyboard.isKeyDown(Keyboard.KEY_A);
-		boolean D = Keyboard.isKeyDown(Keyboard.KEY_D);
-
-		if (W) {
-			q = "up";
-			PLAYER.facing = q;
-		}
-
-		if (S) {
-			q = "down";
-			PLAYER.facing = q;
-		}
-
-		if (A) {
-			q = "left";
-			PLAYER.facing = q;
-		}
-
-		if (D) {
-			q = "right";
-			PLAYER.facing = q;
-		}
-
-		if (W && A)
-		{
-			q = "upleft";
-		}
-
-		if (W && D)
-		{
-			q = "upright";
-		}
-
-		if(S && A)
-		{
-			q = "downleft";
-		}
-
-		if(S && D)
-		{
-			q = "downright";
-		}
-
-		if(Keyboard.isKeyDown(Keyboard.KEY_UP) ||
-				Keyboard.isKeyDown(Keyboard.KEY_DOWN) ||
-				Keyboard.isKeyDown(Keyboard.KEY_LEFT) ||
-				Keyboard.isKeyDown(Keyboard.KEY_RIGHT))
-		{
-			PLAYER.shooting = true;
-			if (Keyboard.isKeyDown(Keyboard.KEY_UP)) {
-				PLAYER.facing = "up";
-			}
-
-			if (Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
-				PLAYER.facing = "down";
-			}
-
-			if (Keyboard.isKeyDown(Keyboard.KEY_LEFT)) {
-				PLAYER.facing = "left";
-			}
-
-			if (Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
-				PLAYER.facing = "right";
-			}
-		}
-		else
-		{
-			PLAYER.shooting = false;
-		}
-		int m = 0;
-		boolean s = chkCol();
-		if(s)
-		{
-			for(String aColl : coll) {
-				getDir(aColl);
-			}
-		}
-		if (q.equals("up")&&!limit_U) {
-			PLAYER.y -= (PLAYER.speed+m)*dt;
-		}
-
-		if (q.equals("down")&&!limit_D) {
-			PLAYER.y += (PLAYER.speed+m)*dt;
-		}
-
-		if (q.equals("left")&&!limit_L) {
-			PLAYER.x -= (PLAYER.speed+m)*dt;
-		}
-
-		if (q.equals("right")&&!limit_R) {
-			PLAYER.x += (PLAYER.speed+m)*dt;
-		}
-
-		if (q.equals("upleft")) {
-			if(!limit_U)
+			if(Keyboard.isKeyDown(Keyboard.KEY_3))
 			{
+				for(int i=0; i < PRELOADS.size(); i++) {
+					Tools.bp(PRELOADS.get(i).getName());
+				}
+			}
+
+			if(Keyboard.isKeyDown(Keyboard.KEY_4))
+			{
+
+			}
+
+			if(Keyboard.isKeyDown(Keyboard.KEY_1))
+			{
+				debug = true;
+			}
+			if(Keyboard.isKeyDown(Keyboard.KEY_2))
+			{
+				debug = false;
+			}
+
+			String q = "";
+
+			boolean W = Keyboard.isKeyDown(Keyboard.KEY_W);
+			boolean S = Keyboard.isKeyDown(Keyboard.KEY_S);
+			boolean A = Keyboard.isKeyDown(Keyboard.KEY_A);
+			boolean D = Keyboard.isKeyDown(Keyboard.KEY_D);
+
+			if (W) {
+				q = "up";
+				PLAYER.facing = q;
+			}
+
+			if (S) {
+				q = "down";
+				PLAYER.facing = q;
+			}
+
+			if (A) {
+				q = "left";
+				PLAYER.facing = q;
+			}
+
+			if (D) {
+				q = "right";
+				PLAYER.facing = q;
+			}
+
+			if (W && A)
+			{
+				q = "upleft";
+			}
+
+			if (W && D)
+			{
+				q = "upright";
+			}
+
+			if(S && A)
+			{
+				q = "downleft";
+			}
+
+			if(S && D)
+			{
+				q = "downright";
+			}
+
+			if(Keyboard.isKeyDown(Keyboard.KEY_UP) ||
+					Keyboard.isKeyDown(Keyboard.KEY_DOWN) ||
+					Keyboard.isKeyDown(Keyboard.KEY_LEFT) ||
+					Keyboard.isKeyDown(Keyboard.KEY_RIGHT))
+			{
+				PLAYER.shooting = true;
+				if (Keyboard.isKeyDown(Keyboard.KEY_UP)) {
+					PLAYER.facing = "up";
+				}
+
+				if (Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
+					PLAYER.facing = "down";
+				}
+
+				if (Keyboard.isKeyDown(Keyboard.KEY_LEFT)) {
+					PLAYER.facing = "left";
+				}
+
+				if (Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
+					PLAYER.facing = "right";
+				}
+			}
+			else
+			{
+				PLAYER.shooting = false;
+			}
+			int m = 0;
+			boolean s = chkCol();
+			if(s)
+			{
+				for(String aColl : coll) {
+					getDir(aColl);
+				}
+			}
+			if (q.equals("up")&&!limit_U) {
 				PLAYER.y -= (PLAYER.speed+m)*dt;
 			}
-			if(!limit_L)
-			{
 
-				PLAYER.x -= (PLAYER.speed+m)*dt;
-			}
-		}
-
-		if (q.equals("upright")) {
-			if(!limit_U)
-			{
-				PLAYER.y -= (PLAYER.speed+m)*dt;
-			}
-			if(!limit_R)
-			{
-				PLAYER.x += (PLAYER.speed+m)*dt;
-			}
-		}
-
-		if (q.equals("downleft")) {
-			if(!limit_D)
-			{
+			if (q.equals("down")&&!limit_D) {
 				PLAYER.y += (PLAYER.speed+m)*dt;
 			}
-			if(!limit_L)
-			{
 
+			if (q.equals("left")&&!limit_L) {
 				PLAYER.x -= (PLAYER.speed+m)*dt;
 			}
-		}
 
-		if (q.equals("downright")) {
-			if(!limit_D)
-			{
-				PLAYER.y += (PLAYER.speed+m)*dt;
-			}
-			if(!limit_R)
-			{
+			if (q.equals("right")&&!limit_R) {
 				PLAYER.x += (PLAYER.speed+m)*dt;
 			}
+
+			if (q.equals("upleft")) {
+				if(!limit_U)
+				{
+					PLAYER.y -= (PLAYER.speed+m)*dt;
+				}
+				if(!limit_L)
+				{
+
+					PLAYER.x -= (PLAYER.speed+m)*dt;
+				}
+			}
+
+			if (q.equals("upright")) {
+				if(!limit_U)
+				{
+					PLAYER.y -= (PLAYER.speed+m)*dt;
+				}
+				if(!limit_R)
+				{
+					PLAYER.x += (PLAYER.speed+m)*dt;
+				}
+			}
+
+			if (q.equals("downleft")) {
+				if(!limit_D)
+				{
+					PLAYER.y += (PLAYER.speed+m)*dt;
+				}
+				if(!limit_L)
+				{
+
+					PLAYER.x -= (PLAYER.speed+m)*dt;
+				}
+			}
+
+			if (q.equals("downright")) {
+				if(!limit_D)
+				{
+					PLAYER.y += (PLAYER.speed+m)*dt;
+				}
+				if(!limit_R)
+				{
+					PLAYER.x += (PLAYER.speed+m)*dt;
+				}
+			}
+
+			if(!s)
+			{
+				limit_R = false;
+				limit_L = false;
+				limit_D = false;
+				limit_U = false;
+			}
+			coll.clear();
 		}
 
-		if(!s)
-		{
-			limit_R = false;
-			limit_L = false;
-			limit_D = false;
-			limit_U = false;
-		}
-		coll.clear();
 	}
 
 	private static int getDir(String spec)

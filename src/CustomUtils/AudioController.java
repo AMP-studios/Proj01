@@ -85,6 +85,17 @@ public class AudioController {
 		soundEffect.stop();
 	}
 
+	public void stopAll()
+    {
+        for(int i = 0; i< sounds.size(); i++)
+        {
+            if(sounds.get(i)!=null&&(sounds.get(i)).isPlaying())
+            {
+                sounds.get(i).stop();
+            }
+        }
+    }
+
 	/**
 	 * Checks if a music sound is currently playing.
 	 * @param name the name of the music being checked

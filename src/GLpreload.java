@@ -14,7 +14,7 @@ import java.util.Scanner;
 public class GLpreload {
 
 
-    private String music = "";
+    public String music = "";
     private  String name = "";
 
     public  double id = Math.random();
