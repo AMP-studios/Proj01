@@ -259,8 +259,7 @@ public class GLenemy {
         }
     }
 
-    public void act() throws IOException
-    {
+    protected void act() throws IOException, AudioControllerException {
 
         if(health<=0)
         {

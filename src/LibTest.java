@@ -76,7 +76,7 @@ public class LibTest {
 
 	private static ArrayList<GLpreload> PRELOADS = new ArrayList<>();
 
-	private static ArrayList<GLenemy> enemies = new ArrayList<>();
+	public static final ArrayList<GLenemy> enemies = new ArrayList<>();
 
 	private static ArrayList<String> existingTiles = new ArrayList<>();
 	private static ArrayList<String> newTiles = new ArrayList<>();
@@ -212,7 +212,7 @@ public class LibTest {
 		PLAYER = new GLplayer(x,y,health,speed,rate);
 	}
 
-	private static void createEnemy(int x, int y, double health, double speed, double rate) throws IOException, AudioControllerException {
+	public static void createEnemy(int x, int y, double health, double speed, double rate) throws IOException, AudioControllerException {
 		GLenemy tex = new GLenemy(x,y,health,speed,rate);
 		enemies.add(tex);
 	}
