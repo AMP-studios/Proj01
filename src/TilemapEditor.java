@@ -512,7 +512,6 @@ public class TilemapEditor{
                 if (listOfFile.isFile() && listOfFile.getName().startsWith("EN")) {
                     Tools.bp("Loading enemy script: "+listOfFile.getName());
                     createEnemy("enemyDefault.png",-100,-100,(char)(26*237*33*29*3),listOfFile.getName());
-                    //marker
                     GLtext snap = createText(listOfFile.getName().substring(0,9),p1+1,p2+1,0);
                     GLbutton v = createButton("WhiteBox.png","WhiteBox.png","WhiteBox.png",p1,p2,listOfFile.getName());
                     v.innocent = false;
@@ -523,8 +522,8 @@ public class TilemapEditor{
                 }
             }
 
-            p1 = 900;
-            p2 = 50;
+            p1 = 740;
+            p2 = 18;
 
             String current3 = new java.io.File( "." ).getCanonicalPath();
             File folder3 = new File(current3+"/src/Assets/Audio/BGM");
@@ -534,10 +533,12 @@ public class TilemapEditor{
                 if (listOfFile.isFile()) {
                     Tools.bp("created music : "+listOfFile.getName());
                     BGM.add(listOfFile.getName());
-                    GLbutton v = createButton("WhiteBox.png","WhiteBox.png","WhiteBox.png",p1,p2,listOfFile.getName());
+                    GLbutton v = createButton("WhiteBox.png","WhiteBox.png","WhiteBox.png",p1,p2,"[setMu],"+listOfFile.getName());
                     v.spec2 = "music";
                     GLbutton play = createButton("bSample1.png","bSample1.png","bSample1.png",p1+66,p2,"[play],"+listOfFile.getName());
                     GLbutton stop = createButton("bSample2.png","bSample2.png","bSample2.png",p1+66+11,p2,"[stop],"+listOfFile.getName());
+                    GLtext ctext = createText(listOfFile.getName().substring(0,9),p1,p2,0);
+                    ctext.tag = "[setMu],"+listOfFile.getName();
                     play.spec2 = "music";
                     stop.spec2 = "music";
                     v.innocent = false;
@@ -740,7 +741,17 @@ public class TilemapEditor{
             if(num != 0)
             {
 
-                if(Mouse.getX()<955)
+                if(Mouse.getX()>730&&Mouse.getX()<835)
+                {
+                    for(GLbutton b : buttons)
+                    {
+                        if(b.tag.startsWith("[setMu]")||b.tag.startsWith("[play]")||b.tag.startsWith("[stop]"))
+                        {
+                            b.y+=num/10;
+                        }
+                    }
+                }
+                if(Mouse.getX()<955&&Mouse.getX()>=835)
                 {
                     for(GLbutton b : buttons)
                     {
@@ -930,15 +941,13 @@ public class TilemapEditor{
                     {
                         onMusic = true;
                     }
-                    if(a.tag.startsWith("[play]")&&!playingMusic)
+                    if(a.tag.startsWith("[play]")&&!ac.isPlaying(a.tag.split(",")[1]))
                     {
                         ac.playMusic(a.tag.split(",")[1],1,true);
-                        playingMusic = true;
                     }
-                    if(a.tag.startsWith("[stop]")&&playingMusic)
+                    if(a.tag.startsWith("[stop]")&&ac.isPlaying(a.tag.split(",")[1]))
                     {
                         ac.stopSound(a.tag.split(",")[1]);
-                        playingMusic = false;
                     }
                     if(a.tag.startsWith("<>show"))
                     {
@@ -971,6 +980,11 @@ public class TilemapEditor{
                     if(a.tag.startsWith(">MS"))
                     {
                         toAutoSave = false;
+                    }
+                    if(a.tag.startsWith("[setMu]"))
+                    {
+                        curMusic=a.tag.split(",")[1];
+                        Tools.bp("music now set to "+curMusic);
                     }
                     if(a.tag.startsWith("[save]"))
                     {
@@ -1179,6 +1193,11 @@ public class TilemapEditor{
         for(GLtile[][] gr : grid)
         {
             out = new PrintWriter(path+name+"_"+move+".map","UTF-8");
+            if(i==0)
+            {
+                out.print(curMusic);
+                out.println();
+            }
             out2 = new PrintWriter(path+name+"_"+move+".col","UTF-8");
             for(GLtile[] a : gr)
             {
@@ -1359,6 +1378,22 @@ public class TilemapEditor{
                 a.render();
             }
 
+            for(GLtext aText : text) {
+                if(onMusic)
+                {
+                    if(aText.tag.startsWith("[setMu]"))
+                    {
+                        GLbutton a = findBut(aText.tag);
+                        aText.x = a.x+1;
+                        aText.y = a.y+1;
+                        if(aText.y<50&&aText.y>-10)
+                        {
+                            aText.render();
+                        }
+                    }
+                }
+            }
+
             for(GLtile[][] gr :grid)
             {
                 for(GLtile[] a : gr)
@@ -1372,7 +1407,10 @@ public class TilemapEditor{
                     }
                 }
             }
-            if(!tileMode&&!onMusic)
+
+
+
+            if(!tileMode)
             {
                 for(GLtile[] a : enemyDraw)
                 {
@@ -1398,11 +1436,11 @@ public class TilemapEditor{
             for(GLtext aText : text) {
                 if(tileMode)
                 {
-                    if(!aText.tag.startsWith("EN"))
+                    if(!aText.tag.startsWith("EN")&&!aText.tag.startsWith("[setMu]"))
                     {
                         aText.render();
                     }
-                }else if(!tileMode && !onMusic){
+                }else if(!tileMode &&!aText.tag.startsWith("[setMu]")){
                     if(aText.tag.startsWith("EN"))
                     {
                         GLbutton a = findBut(aText.tag);
@@ -1410,14 +1448,6 @@ public class TilemapEditor{
                         aText.y = a.y+1;
                     }
                     aText.render();
-                }else if(onMusic && !tileMode)
-                {
-                    if(aText.tag.endsWith(".wav"))
-                    {
-                        GLbutton a = findBut(aText.tag);
-                        aText.x = a.x+1;
-                        aText.y = a.y+1;
-                    }
                 }
 
             }

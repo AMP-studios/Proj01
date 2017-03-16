@@ -13,6 +13,8 @@ import java.util.Scanner;
  */
 public class GLpreload {
 
+
+    private String music = "";
     private  String name = "";
 
     public  double id = Math.random();
@@ -259,6 +261,11 @@ public class GLpreload {
         for(GLtile[][] gr : grid)
         {
             in = new Scanner(new FileReader(path+name+"_"+z+".map"));
+            if(z==0)
+            {
+                music = in.nextLine();
+                Tools.bp("cur music "+music);
+            }
             Tools.p("opened "+path+name+"_"+z+".map");
             in2  = new Scanner(new FileReader(path+name+"_"+z+".col"));
             Tools.p("opened "+path+name+"_"+z+".col");
