@@ -11,6 +11,7 @@ import org.newdawn.slick.opengl.Texture;
 import org.newdawn.slick.opengl.TextureLoader;
 import org.newdawn.slick.util.ResourceLoader;
 
+import javax.tools.Tool;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -531,9 +532,8 @@ public class TilemapEditor{
             assert listOfFiles3!=null;
             for(java.io.File listOfFile : listOfFiles3) {
                 if (listOfFile.isFile()) {
+                    Tools.bp("created music : "+listOfFile.getName());
                     BGM.add(listOfFile.getName());
-                    //GLtext snap = createText(listOfFile.getName().substring(0,9),p1+1,p2+1,0);
-                    //snap.tag=listOfFile.getName();
                     GLbutton v = createButton("WhiteBox.png","WhiteBox.png","WhiteBox.png",p1,p2,listOfFile.getName());
                     v.spec2 = "music";
                     GLbutton play = createButton("bSample1.png","bSample1.png","bSample1.png",p1+66,p2,"[play],"+listOfFile.getName());
@@ -544,6 +544,7 @@ public class TilemapEditor{
                     stop.innocent = false;
                     play.innocent = false;
                     ac.addSound("/src/Assets/Audio/BGM/"+listOfFile.getName(),listOfFile.getName());
+                    p2+=13;
                 }
             }
 
