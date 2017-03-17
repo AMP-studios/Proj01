@@ -1,3 +1,8 @@
+import CustomUtils.Time;
+import com.sun.corba.se.impl.oa.toa.TOA;
+import org.lwjgl.opengl.*;
+import org.newdawn.slick.opengl.ImageIOImageData;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -6,14 +11,140 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+
+import static org.lwjgl.opengl.GL11.*;
 
 
 public class TileCreator {
     private final static int BLACK = -16777216;
     private final static int CLEAR = 16777215;
-    public static void main(String[] foo) throws IOException
+    private static final Time gameTime=new Time();
+    private static long lastUpdateTime=0;
+    private static final int W = 800;
+    private static final int H = 640;
+    private static ArrayList<GLbutton> buttons = new ArrayList<>();
+    private static ArrayList<GLtile> images = new ArrayList<>();
+    private static ArrayList<GLbutton> row1 =new ArrayList<>();
+    private static ArrayList<GLbutton> row2 =new ArrayList<>();
+    public static void start() throws IOException , CustomUtils.AudioControllerException, ClassNotFoundException, NoSuchMethodException, InstantiationException,IllegalAccessException,InvocationTargetException
     {
-        LoadPixel("build_inline","build_outline", "ironFloor");
+        //in = new PrintWriter(path+"tiles.txt","UTF-8");
+
+        initGL(W,H);
+        init();
+        //createImage("whiteBack.png",0,0);
+        while (true) {
+            long curTime=gameTime.getTime();
+            double dt=(curTime-lastUpdateTime)/1000.0;
+            lastUpdateTime=curTime;
+            glClear(GL_COLOR_BUFFER_BIT);
+            RENDER(dt);
+            UPDATE(dt);
+            INPUT(dt);
+            Display.update();
+            Display.sync(100);
+            if (Display.isCloseRequested()) {
+                Display.destroy();
+                System.exit(0);
+            }
+
+        }
+    }
+
+    private static GLbutton createButton(String normal, int x, int y, String tag,ArrayList<GLbutton> toadd) throws IOException
+    {
+        GLbutton tex = new GLbutton(normal,normal,normal,x,y,tag);
+        toadd.add(tex);
+        return tex;
+    }
+
+    public static void loadAllPng() throws IOException
+    {
+        String current3 = new java.io.File( "." ).getCanonicalPath();
+        File folder3 = new File(current3+"/src/Assets/Art/Tiles");
+        File[] listOfFiles3 = folder3.listFiles();
+        assert listOfFiles3!=null;
+        int x = 50;
+        int y = 50;
+        for(java.io.File listOfFile : listOfFiles3) {
+            if (listOfFile.isFile()&&listOfFile.getName().endsWith(".png")) {
+                createButton(listOfFile.getName(),x,y,listOfFile.getName(),row1);
+                createButton(listOfFile.getName(),x+100,y,listOfFile.getName(),row2);
+                y+=42;
+            }
+        }
+    }
+
+    public static void init() throws IOException, CustomUtils.AudioControllerException, ClassNotFoundException, NoSuchMethodException, InstantiationException,IllegalAccessException,InvocationTargetException
+    {
+        loadAllPng();
+    }
+
+    private static void initGL(int width, int height)
+    {
+        try
+        {
+            Display.setDisplayMode(new org.lwjgl.opengl.DisplayMode(width,height));
+            //Display.setFullscreen(true);
+            //Display.setResizable(true);
+            //Display.setDisplayModeAndFullscreen(Display.getDesktopDisplayMode());
+            Display.setTitle("Tile Creator");
+            Display.setIcon(new ByteBuffer[] {
+                    new ImageIOImageData().imageToByteBuffer(ImageIO.read(new File("src/Assets/ico16.png")), false, false, null),
+                    new ImageIOImageData().imageToByteBuffer(ImageIO.read(new File("src/Assets/ico32.png")), false, false, null)
+            });
+            Display.setVSyncEnabled(true);
+            Display.create();
+
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            //System.exit(0);
+        }
+        glEnable(GL_TEXTURE_2D);
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glViewport(0,0,width,height);
+        glMatrixMode(GL_MODELVIEW);
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(0, width, height, 0, 1, -1);
+        glMatrixMode(GL_MODELVIEW);
+    }
+
+    public static void RENDER(double dt)
+    {
+        for(GLbutton b : buttons)
+        {
+            b.render();
+            b.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
+        }
+    }
+    public static void UPDATE(double dt)
+    {
+        for(GLbutton b : buttons)
+        {
+            if(b.click)
+            {
+                Tools.bp(b.tag);
+            }
+        }
+    }
+    public static void INPUT(double dt)
+    {
+
+    }
+
+    //LoadPixel("build_inline","build_outline", "ironFloor");
+    public static void main(String[] foo) throws IOException , CustomUtils.AudioControllerException, ClassNotFoundException, NoSuchMethodException, InstantiationException,IllegalAccessException,InvocationTargetException
+    {
+        gameTime.start();
+        start();
     }
 
     public static void flipHorz(int[][] a)

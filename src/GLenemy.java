@@ -460,6 +460,11 @@ public class GLenemy {
 
     }
 
+    public void setShootStyle(String style)
+    {
+        curWeapon=new GLweapon(style);
+    }
+
     public void updateDS()
     {
         ANGLE=ANGLE%360;

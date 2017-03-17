@@ -12,10 +12,15 @@ public class ENfusion_boss extends GLenemy{
 		Tools.bp("spawned enemy at "+xy);
 		addImage("boass1_1.png"); //Temp
 		addImage("boass1_0.png");
+		setShootStyle("a1:1:!#f4=e");
 		timer.start();
 	}
 	@Override
 	protected void act() throws IOException, AudioControllerException {
+		if(health<0)
+		{
+			LibTest.loadMapFromPreload("l2r1");
+		}
 		super.act();
 		if (timer.getTime()>700) {
 			LibTest.addEnemy(new ENFusionBossSpawn(String.format("%d,%d", (int) super.x, (int) super.y)));
@@ -23,4 +28,5 @@ public class ENfusion_boss extends GLenemy{
 			timer.start();
 		}
 	}
+
 }

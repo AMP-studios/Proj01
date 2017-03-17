@@ -26,6 +26,7 @@ public class ENsolar_boss extends GLenemy{
 		super(Integer.parseInt(xy.split(",")[0]),Integer.parseInt(xy.split(",")[1]),30,2,200);
 		Tools.bp("spawned enemy at "+xy);
 		addImage("tl--MutantPig.png"); //Temp
+		setShootStyle("a1:1:!#f1=b1.b1f2--=e");
 		timer.start();
 		timer2.start();
 		timer3.start();

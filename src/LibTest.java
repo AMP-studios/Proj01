@@ -421,7 +421,7 @@ public class LibTest {
 		}
 	}
 
-	private static void loadMapFromPreload(String name) throws AudioControllerException, IOException
+	public static void loadMapFromPreload(String name) throws AudioControllerException, IOException
 	{
 		boolean fail = true;
 		for (GLpreload PRELOAD : PRELOADS) {
@@ -668,7 +668,6 @@ public class LibTest {
 			createImage("scoreBox.png",0,0,">scoreBox");
 			GLtext temp = createText(""+SCORE,40,3,0);
 			temp.tag = ">SCORE";
-
 		}
 
 		for(GLtile[][] gr: grid)
@@ -739,9 +738,6 @@ public class LibTest {
 			PLAYER.render();
 		}
 
-
-
-
 	}
  
 	/**
@@ -753,7 +749,7 @@ public class LibTest {
 	public static void main(String[] args) throws IOException , CustomUtils.AudioControllerException, ClassNotFoundException, NoSuchMethodException, InstantiationException,IllegalAccessException,InvocationTargetException
 
 	{
-
+		System.setOut(new PrintStream(new  File("log.txt")));
 		try{
 			//Runtime.getRuntime().exec(new String[] {"java", "-Xmx1024m", "-jar", "MyApp.jar", "test"});
 			Runtime.getRuntime().exec(new String[] {"java", "-Djava.library.path=libs/", "-jar", "test1.jar", "test"});

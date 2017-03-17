@@ -54,9 +54,7 @@ public class GLtile {
 			me = s;
 		}
 		//Tools.p(me);
-		texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream(pth+path));
-		h = texture.getTextureHeight();
-		w = texture.getTextureWidth();
+			texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream(pth+path));
 	}
 
 	public void setRenderDelay(int d)
