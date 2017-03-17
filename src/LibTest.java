@@ -88,7 +88,7 @@ public class LibTest {
 	private static ArrayList<String> newTiles = new ArrayList<>();
 	private static AudioController ac = new AudioController();
 
-	private static String path = "src\\Assets\\Art\\Tiles\\";
+	private static String path = "src/Assets/Art/Tiles/";
 	private static PrintWriter in;
 
 	private static ArrayList<GLdoor> doors = new ArrayList<>();
@@ -313,7 +313,7 @@ public class LibTest {
 
 	private static void loadExisting() throws IOException
 	{
-		String path = "src\\Assets\\Art\\Tiles\\";
+		String path = "src/Assets/Art/Tiles/";
 		Scanner in = new Scanner(new FileReader(path+"tiles.txt"));
 		while(in.hasNextLine())
 		{
@@ -471,7 +471,7 @@ public class LibTest {
 
 	private static void loadDoors() throws IOException
 	{
-		String path = "src\\Assets\\Scenes\\";
+		String path = "src/Assets/Scenes/";
 		Scanner temp = new Scanner(new FileReader(path+"doors.txt"));
 		while(temp.hasNextLine())
 		{
@@ -544,7 +544,7 @@ public class LibTest {
 			createTile(a.substring(3),-100,-100,(char)(tiles.size()+1000),'*');
 		}
 
-		String path = "src\\Assets\\Scenes\\";
+		String path = "src/Assets/Scenes/";
 
 		Scanner in;
 

@@ -661,7 +661,7 @@ public class TilemapEditor{
     private static void SET_TILES() throws IOException
     {
         //open doors.txt
-        String path = "src\\Assets\\Scenes\\";
+        String path = "src/Assets/Scenes/";
         Scanner temp = new Scanner(new FileReader(path+"doors.txt"));
         while(temp.hasNextLine())
         {
