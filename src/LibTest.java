@@ -635,7 +635,13 @@ public class LibTest {
 		{
 			buttons.clear();
 			images.clear();
-			createPlayer(200,200,100,100,100);
+			Scanner stat_reader = new Scanner(new File("src/PlayerStats.txt"));
+			int h=stat_reader.nextInt();
+			stat_reader.next();
+			int s=stat_reader.nextInt();
+			stat_reader.next();
+			int r=stat_reader.nextInt();
+			createPlayer(200,200,h,s,r);
 			Screen_state="Game";
 			loadMapFromPreload("l1r0");
 			createImage("scoreBox.png",0,0,">scoreBox");
