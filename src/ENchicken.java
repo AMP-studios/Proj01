@@ -10,7 +10,7 @@ import java.io.IOException;
 public class ENchicken extends GLenemy{
     public ENchicken(String xy) throws AudioControllerException, IOException
     {
-        super(Integer.parseInt(xy.split(",")[0]),Integer.parseInt(xy.split(",")[1]),10,1,100);
+        super(Integer.parseInt(xy.split(",")[0]),Integer.parseInt(xy.split(",")[1]),5,1,1000);
         Tools.bp("spawned enemy at "+xy);
         addImage("tl--mutantchicken.png");
     }

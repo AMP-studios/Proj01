@@ -482,20 +482,20 @@ public class GLenemy {
         {
             if(playerInVision) {
                 facing = playerIs(LibTest.PLAYER);
-                Tools.bp("Poof");
                 shoot();
                 curWeapon.render();
                 shootTimer.clear();
                 shootTimer.start();
             }
         }
-        this.x+=moveDx;
-        this.y+=moveDy;
+        this.x+=moveDx*speed;
+        this.y+=moveDy*speed;
     }
 
 
-    public void shoot() throws AudioControllerException {
-    	ac.playSoundEffect("Shot", 0.1);
+    public void shoot() throws AudioControllerException, IOException  {
+    	ac.playSoundEffect("Shot", 0.2);
         curWeapon.step = "create";
+        curWeapon.render();
     }
 }

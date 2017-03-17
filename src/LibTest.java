@@ -44,7 +44,9 @@ public class LibTest {
 	private static boolean limit_D = false;
 	private static boolean limit_L = false;
 	private static boolean limit_R = false;
-	
+
+	private static ArrayList<GLenemy> toAdd = new ArrayList<>();
+
 	//currently variables to save player position to be removed later.
 	private static int x = 200;
 	private static int y = 100;
@@ -88,7 +90,7 @@ public class LibTest {
 	private static ArrayList<String> newTiles = new ArrayList<>();
 	private static AudioController ac = new AudioController();
 
-	private static String path = "src/Assets/Art/Tiles/";
+	private static String path = "src\\Assets\\Art\\Tiles\\";
 	private static PrintWriter in;
 
 	private static ArrayList<GLdoor> doors = new ArrayList<>();
@@ -268,7 +270,6 @@ public class LibTest {
 			loadMusic();
 			loadDoors();
 
-			ac.stopSound("loadmusic");
 			//createEnemy(100,200,2,2,1000);
 
 
@@ -313,7 +314,7 @@ public class LibTest {
 
 	private static void loadExisting() throws IOException
 	{
-		String path = "src/Assets/Art/Tiles/";
+		String path = "src\\Assets\\Art\\Tiles\\";
 		Scanner in = new Scanner(new FileReader(path+"tiles.txt"));
 		while(in.hasNextLine())
 		{
@@ -471,7 +472,7 @@ public class LibTest {
 
 	private static void loadDoors() throws IOException
 	{
-		String path = "src/Assets/Scenes/";
+		String path = "src\\Assets\\Scenes\\";
 		Scanner temp = new Scanner(new FileReader(path+"doors.txt"));
 		while(temp.hasNextLine())
 		{
@@ -544,7 +545,7 @@ public class LibTest {
 			createTile(a.substring(3),-100,-100,(char)(tiles.size()+1000),'*');
 		}
 
-		String path = "src/Assets/Scenes/";
+		String path = "src\\Assets\\Scenes\\";
 
 		Scanner in;
 
@@ -587,13 +588,37 @@ public class LibTest {
 		Tools.p("finished loading");
 
 	}
- 
+
+	public static void addEnemy(Object a)
+	{
+		toAdd.add((GLenemy) a);
+	}
+
 	/**
 	 * Where you do things to GLimages to make the game function. 
 	 * Yes I know it's vague but that is what it is. 
 	 * @throws IOException if a file not found exception occurs during GLimage creation.
 	 */
 	private static void UPDATE(double dt) throws IOException {
+		ArrayList<GLenemy> trash = new ArrayList<>();
+		for(GLenemy e : toAdd)
+		{
+			try
+			{
+				enemies.add(e);
+				trash.add(e);
+			}
+			catch (Exception a)
+			{
+				a.printStackTrace();
+			}
+		}
+
+		for(GLenemy t : trash)
+		{
+			toAdd.remove(t);
+		}
+
 		if(Screen_state.equals("Game"))
 		{
 			for(GLtext t: text)
@@ -627,21 +652,17 @@ public class LibTest {
 
 		if(Screen_state.equals("menu"))
 		{
+
 			createImage("background_m.png",0,0,"back");
 			createButton("bPlay.png","bPlay.png","bPlay.png",300,420,"[PLAY]");
 			Screen_state = "awaitPlay";
 		}
 		if(Screen_state.equals("loadFirstMap"))
 		{
+			ac.stopAll();
 			buttons.clear();
 			images.clear();
-			Scanner stat_reader = new Scanner(new File("src/PlayerStats.txt"));
-			int h=stat_reader.nextInt();
-			stat_reader.next();
-			int s=stat_reader.nextInt();
-			stat_reader.next();
-			int r=stat_reader.nextInt();
-			createPlayer(200,200,h,s,r);
+			createPlayer(200,200,30,300,100);
 			Screen_state="Game";
 			loadMapFromPreload("l1r0");
 			createImage("scoreBox.png",0,0,">scoreBox");
@@ -649,8 +670,6 @@ public class LibTest {
 			temp.tag = ">SCORE";
 
 		}
-
-
 
 		for(GLtile[][] gr: grid)
 		{

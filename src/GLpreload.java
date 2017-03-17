@@ -61,6 +61,7 @@ public class GLpreload {
 
     private void addEnemy(String name, int x, int y) throws ClassNotFoundException, NoSuchMethodException, InstantiationException,IllegalAccessException,InvocationTargetException
     {
+        Tools.bp("attempting to create enemy : " +name);
         Object object = Class.forName(name)
                 .getConstructor(String.class)
                 .newInstance(""+x+","+y);

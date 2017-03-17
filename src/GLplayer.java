@@ -33,6 +33,7 @@ public class GLplayer {
 	private AudioController ac = new AudioController();
 	public GLplayer(int x, int y, double health, double speed, double rate) throws IOException, AudioControllerException {
 		ac.addSound("/src/Assets/Audio/SFX/Reload.wav","Shot");
+		ac.addSound("/src/Assets/Audio/SFX/grunt.wav","Grunt");
 		this.rate = rate;
 		shootTimer=new Time();
 		shootTimer.start();
@@ -107,6 +108,7 @@ public class GLplayer {
 	}
 
 	public void updt() throws AudioControllerException {
+		Tools.bp("dead "+(health<0));
 		if(shooting && shootTimer.getTime()>rate)
 		{
 			shoot();
@@ -119,7 +121,7 @@ public class GLplayer {
 		}
 	}
 
-	public void bulletCol(GLenemy e)
+	public void bulletCol(GLenemy e) throws AudioControllerException
 	{
 		GLenemy me = e;
 		for(int i = 0; i < me.curWeapon.bullets.size(); i++)
@@ -132,13 +134,14 @@ public class GLplayer {
 					cur.active = false;
 					health-=cur.damage;
 					Hpbar.subtract((int)cur.damage);
+					ac.playSoundEffect("Grunt",0.7);
 				}
 			}
 		}
 	}
 
 	public void shoot() throws AudioControllerException {
-		ac.playSoundEffect("Shot", .5);
+		ac.playSoundEffect("Shot", .3);
 		curWeapon.step = "create";
 	}
 }

@@ -593,7 +593,7 @@ public class TilemapEditor{
             createButton("bLoad.png","bLoad.png","bLoad.png",50,10,"[load]");
             createButton("bNew.png","bNew.png","bNew.png",10,700,"[new]");
 
-            createButton("bBkt.png","bBkt.png","bBkt.png",300,10,"<>bucket");
+            createButton("bEracer.png","bEracer.png","bEracer.png",300,10,"<>eracer");
             createButton("bPen.png","bPen.png","bPen.png",340,10,"<>pen");
 
             createButton("bPs.png","bPs.png","bPs.png",380,10,"<>Ps");
@@ -1040,9 +1040,9 @@ public class TilemapEditor{
                     {
                         tool = "pen";
                     }
-                    if(a.tag.startsWith("<>bucket"))
+                    if(a.tag.startsWith("<>eracer"))
                     {
-                        tool = "bucket";
+                        curSel = findTile("tl--invis.png");
                     }
                     if(a.tag.startsWith("<>Ps"))
                     {
