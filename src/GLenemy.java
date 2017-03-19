@@ -113,6 +113,10 @@ public class GLenemy {
     {
         grid = a;
     }
+    public void onDie() throws IOException, AudioControllerException
+    {
+
+    }
     public int getDir(String spec)
     {
         String[] a = spec.split(":");
@@ -164,9 +168,10 @@ public class GLenemy {
         return grid[0][0][0];
     }
 
-    public void die()
+    public void die() throws IOException, AudioControllerException
     {
         alive =false;
+        onDie();
     }
 
     public void addPoints()
@@ -286,7 +291,7 @@ public class GLenemy {
         }
     }
 
-    public void run()
+    public void run()  throws IOException, AudioControllerException
     {
         this.x-=speed*5;
         if(this.x < -40)

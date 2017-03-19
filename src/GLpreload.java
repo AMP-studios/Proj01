@@ -14,7 +14,7 @@ import java.util.Scanner;
 public class GLpreload {
 
 
-    public String music = "";
+    public String music = "cur music 10 Where Did All the Puppets Go.wav";
     private  String name = "";
 
     public  double id = Math.random();

@@ -19,6 +19,7 @@ public class GLplayer {
 	private Time shootTimer;
 	boolean shooting;
 	double x;
+	boolean render = true;
 	double y;
 	String pth;
 	Texture texture;
@@ -41,7 +42,7 @@ public class GLplayer {
 		this.health = health;
 		this.speed = speed;
 		this.y = y;
-		Hpbar = new GLhealthbar(Display.getWidth()-300,Display.getHeight()-20,(int)health,300,"grey_bar1.png","red_bar1.png");
+		Hpbar = new GLhealthbar(x-15,x-30,(int)health,50,"grey_bar1.png","red_bar1.png");
 		String current = new java.io.File( "." ).getCanonicalPath();
 		File folder = new File(current+"/src/Assets/Art/Tiles");
 		File[] listOfFiles = folder.listFiles();
@@ -87,6 +88,8 @@ public class GLplayer {
 
 	public void render() throws IOException, AudioControllerException {
 		setTex();
+		Hpbar.x = (int)x;
+		Hpbar.y = (int)y+36;
 		Hpbar.render();
 		Color.white.bind();
 		texture.bind();
@@ -107,8 +110,15 @@ public class GLplayer {
 		curWeapon.render();
 	}
 
-	public void updt() throws AudioControllerException {
-		Tools.bp("dead "+(health<0));
+	public void updt() throws AudioControllerException, IOException {
+		//Tools.bp("dead "+(health<0));
+		if(health<0)
+		{
+			LibTest.createImage("gameOver.png",0,0,">hue");
+			LibTest.createButton("bRetry1.png","bRetry2.png","bRetry3.png",300 ,340 ,"[RETRY]");
+			//LibTest.loadLevelName="gameover";
+			//LibTest.loadInQuque=true;
+		}
 		if(shooting && shootTimer.getTime()>rate)
 		{
 			shoot();

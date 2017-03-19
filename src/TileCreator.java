@@ -1,9 +1,14 @@
 import CustomUtils.Time;
 import com.sun.corba.se.impl.oa.toa.TOA;
+import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.*;
 import org.newdawn.slick.opengl.ImageIOImageData;
+import org.newdawn.slick.opengl.Texture;
+import org.newdawn.slick.opengl.TextureLoader;
+import org.newdawn.slick.util.ResourceLoader;
 
 import javax.imageio.ImageIO;
+import javax.tools.Tool;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
@@ -23,16 +28,21 @@ public class TileCreator {
     private final static int CLEAR = 16777215;
     private static final Time gameTime=new Time();
     private static long lastUpdateTime=0;
-    private static final int W = 800;
-    private static final int H = 640;
+    private static final int W = 400;
+    private static String img1 = "";
+    private static String img2 = "";
+    private static String finalName = "";
+    private static final int H = 300;
+    private static GLinput input;
     private static ArrayList<GLbutton> buttons = new ArrayList<>();
-    private static ArrayList<GLtile> images = new ArrayList<>();
+    private static GLtile d1;
+    private static GLtile d2;
     private static ArrayList<GLbutton> row1 =new ArrayList<>();
     private static ArrayList<GLbutton> row2 =new ArrayList<>();
     public static void start() throws IOException , CustomUtils.AudioControllerException, ClassNotFoundException, NoSuchMethodException, InstantiationException,IllegalAccessException,InvocationTargetException
     {
         //in = new PrintWriter(path+"tiles.txt","UTF-8");
-
+        gameTime.start();
         initGL(W,H);
         init();
         //createImage("whiteBack.png",0,0);
@@ -71,9 +81,15 @@ public class TileCreator {
         int y = 50;
         for(java.io.File listOfFile : listOfFiles3) {
             if (listOfFile.isFile()&&listOfFile.getName().endsWith(".png")) {
-                createButton(listOfFile.getName(),x,y,listOfFile.getName(),row1);
-                createButton(listOfFile.getName(),x+100,y,listOfFile.getName(),row2);
-                y+=42;
+
+                String pth = "Assets\\Art\\Tiles\\";
+                Texture t = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream(pth+listOfFile.getName()));
+                if(t.getTextureHeight()<33&&t.getTextureWidth()<33)
+                {
+                    createButton(listOfFile.getName(),x,y,listOfFile.getName(),row1);
+                    createButton(listOfFile.getName(),x+100,y,listOfFile.getName(),row2);
+                    y+=42;
+                }
             }
         }
     }
@@ -81,6 +97,9 @@ public class TileCreator {
     public static void init() throws IOException, CustomUtils.AudioControllerException, ClassNotFoundException, NoSuchMethodException, InstantiationException,IllegalAccessException,InvocationTargetException
     {
         loadAllPng();
+        d1 = new GLtile("tl--invis.png",250, 125-32-10,'x','x');
+        d1 = new GLtile("tl--invis.png",250+42, 125-32-10,'x','x');
+        createButton("bCombine.png",250,125,"[GATTAI]",buttons);
     }
 
     private static void initGL(int width, int height)
@@ -117,33 +136,113 @@ public class TileCreator {
         glMatrixMode(GL_MODELVIEW);
     }
 
-    public static void RENDER(double dt)
+    public static void RENDER(double dt) throws IOException
     {
         for(GLbutton b : buttons)
         {
             b.render();
             b.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
         }
+        for(GLbutton b : row1)
+        {
+            b.render();
+            b.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
+        }
+        for(GLbutton b : row2)
+        {
+            b.render();
+            b.update(org.lwjgl.input.Mouse.getX(), org.lwjgl.input.Mouse.getY(), org.lwjgl.input.Mouse.isButtonDown(0), dt);
+        }
+        if(d1!=null){
+            d1.render();
+        }
+        if(d2!=null){
+            d2.render();
+        }
+        if(input!=null)
+        {
+            input.render();
+        }
+
     }
-    public static void UPDATE(double dt)
+
+    public static void checkCreation() throws IOException
     {
+        if(input!=null)
+        {
+            String e = input.getEntry();
+            if(e!=null)
+            {
+                LoadPixel(img1,img2,e);
+                input=null;
+            }
+        }
+    }
+
+    public static void UPDATE(double dt) throws IOException
+    {
+        checkCreation();
         for(GLbutton b : buttons)
         {
             if(b.click)
             {
                 Tools.bp(b.tag);
+                if(b.tag.startsWith("[GATTAI]"))
+                {
+                    input = new GLinput("whiteBack.png",W/2-90,H/2-25,"nope");
+                    input.sel = true;
+                }
             }
         }
+        for(GLbutton b : row1)
+        {
+            if(b.click)
+            {
+                Tools.bp(b.tag);
+                img1 = b.tag;
+                d1 = new GLtile(b.tag,250,125-32-10,'x','x');
+            }
+        }
+        for(GLbutton b : row2)
+        {
+            if(b.click)
+            {
+                Tools.bp(b.tag);
+                img2 = b.tag;
+                d2 = new GLtile(b.tag,250+42,125-32-10,'x','x');
+            }
+        }
+
     }
     public static void INPUT(double dt)
     {
-
+        if (Mouse.isButtonDown(0))
+        {
+            Tools.p(""+Mouse.getX()+" : "+(H-Mouse.getY()));
+        }
+        int num = Mouse.getDWheel();
+        if(num != 0)
+        {
+            if(Mouse.getX()<117)
+            {
+                for(GLbutton b : row1)
+                {
+                        b.y+=num/10;
+                }
+            }
+            else
+            {
+                for(GLbutton b : row2)
+                {
+                        b.y+=num/10;
+                }
+            }
+        }
     }
 
     //LoadPixel("build_inline","build_outline", "ironFloor");
     public static void main(String[] foo) throws IOException , CustomUtils.AudioControllerException, ClassNotFoundException, NoSuchMethodException, InstantiationException,IllegalAccessException,InvocationTargetException
     {
-        gameTime.start();
         start();
     }
 
@@ -442,7 +541,7 @@ public class TileCreator {
 
     private static int[][] toPix(String a) throws IOException
     {
-        File img = new File(System.getProperty("user.dir")+"/src/Assets/Art/Tiles/"+a+".png");
+        File img = new File(System.getProperty("user.dir")+"/src/Assets/Art/Tiles/"+a);
         Tools.p(img.getAbsolutePath());
         BufferedImage image = ImageIO.read(img);
         final byte[] pixels = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
@@ -491,7 +590,7 @@ public class TileCreator {
     public static void crop(int x, int y, int w, int h, String a, String b) throws IOException
     {
         final BufferedImage dst = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-        File img = new File(System.getProperty("user.dir")+"/src/Assets/Art/Tiles/"+a+".png");
+        File img = new File(System.getProperty("user.dir")+"/src/Assets/Art/Tiles/"+a);
         BufferedImage image = ImageIO.read(img);
         BufferedImage iimage = image.getSubimage(x, y, x+w, y+h); //fill in the corners of the desired crop location here
         //BufferedImage copyOfImage = new BufferedImage(iimage.getWidth(), iimage.getHeight(), BufferedImage.TYPE_INT_RGB);
@@ -499,7 +598,7 @@ public class TileCreator {
         Graphics g = copyOfImage.createGraphics();
         g.drawImage(iimage, 0, 0, null);
         g.dispose();
-        ImageIO.write(copyOfImage, "PNG", new FileOutputStream(System.getProperty("user.dir")+"/src/Assets/Art/Tiles/"+b+".png"));
+        ImageIO.write(copyOfImage, "PNG", new FileOutputStream(System.getProperty("user.dir")+"/src/Assets/Art/Tiles/"+b));
 
 
     }

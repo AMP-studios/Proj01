@@ -40,6 +40,11 @@ public class LibTest {
 
 	private static ArrayList<GLenemy> torem = new ArrayList<>();
 
+	private static Time loadingCooldown = new Time();
+
+	public static boolean loadInQuque = false;
+	public static String loadLevelName = "";
+
 	private static boolean limit_U = false;
 	private static boolean limit_D = false;
 	private static boolean limit_L = false;
@@ -104,7 +109,7 @@ public class LibTest {
 	public static void start() throws IOException , CustomUtils.AudioControllerException, ClassNotFoundException, NoSuchMethodException, InstantiationException,IllegalAccessException,InvocationTargetException
 	{
 		//in = new PrintWriter(path+"tiles.txt","UTF-8");
-
+		loadingCooldown.start();
 		initGL(W,H);
 		init();
 		//createImage("whiteBack.png",0,0);
@@ -113,9 +118,12 @@ public class LibTest {
 			double dt=(curTime-lastUpdateTime)/1000.0;
 			lastUpdateTime=curTime;
 			glClear(GL_COLOR_BUFFER_BIT);
-			RENDER(dt);
-			UPDATE(dt);
-			INPUT(dt);
+			if(loadingCooldown.getTime()>0)
+			{
+				RENDER(dt);
+				UPDATE(dt);
+				INPUT(dt);
+			}
 			Display.update();
 			Display.sync(100);
 			if (Display.isCloseRequested()) {
@@ -189,7 +197,7 @@ public class LibTest {
 		images.add(tex);
 	}
 
-	private static GLbutton createButton(String normal, String hover, String click, int x, int y, String tag) throws IOException
+	public static GLbutton createButton(String normal, String hover, String click, int x, int y, String tag) throws IOException
 	{
 		GLbutton tex = new GLbutton(normal,hover,click,x,y,tag);
 		buttons.add(tex);
@@ -415,14 +423,23 @@ public class LibTest {
 
 	private static void loadMusic() throws AudioControllerException, IOException
 	{
-		for(GLpreload p : PRELOADS)
+		String current3 = new java.io.File( "." ).getCanonicalPath();
+		File folder3 = new File(current3+"/src/Assets/Audio/BGM");
+		File[] listOfFiles3 = folder3.listFiles();
+		assert listOfFiles3!=null;
+		for(java.io.File listOfFile : listOfFiles3)
 		{
-			ac.addSound("/src/Assets/Audio/BGM/"+p.music,p.music);
+			if (listOfFile.isFile())
+			{
+				ac.addSound("/src/Assets/Audio/BGM/"+listOfFile.getName(),listOfFile.getName());
+			}
 		}
 	}
 
 	public static void loadMapFromPreload(String name) throws AudioControllerException, IOException
 	{
+		loadingCooldown.clear();
+		loadingCooldown.start();
 		boolean fail = true;
 		for (GLpreload PRELOAD : PRELOADS) {
 			if (PRELOAD.getName().equals(name)) {
@@ -599,7 +616,12 @@ public class LibTest {
 	 * Yes I know it's vague but that is what it is. 
 	 * @throws IOException if a file not found exception occurs during GLimage creation.
 	 */
-	private static void UPDATE(double dt) throws IOException {
+	private static void UPDATE(double dt) throws IOException , AudioControllerException{
+		if(loadInQuque)
+		{
+			loadMapFromPreload(loadLevelName);
+			loadInQuque=false;
+		}
 		ArrayList<GLenemy> trash = new ArrayList<>();
 		for(GLenemy e : toAdd)
 		{
@@ -633,6 +655,7 @@ public class LibTest {
 		{
 			PLAYER.curWeapon.paused =debug;
 		}
+		boolean ret = false;
 		for(GLbutton a : buttons)
 		{
 			if(a.click) {
@@ -640,7 +663,22 @@ public class LibTest {
 				{
 					Screen_state="loadFirstMap";
 				}
+				if(a.tag.startsWith("[RETRY]"))
+				{
+					ret = true;
+					PLAYER.health = 30;
+					PLAYER.x = 60;
+					PLAYER.y = 500;
+					PLAYER.Hpbar = new GLhealthbar(x-15,x-30,(int)30,50,"grey_bar1.png","red_bar1.png");
+					loadMapFromPreload("l1r1");
+				}
 			}
+		}
+		if(ret)
+		{
+			buttons.clear();
+			images.clear();
+			createImage("scoreBox.png",0,0,">scoreBox");
 		}
 	}
 	
@@ -662,9 +700,9 @@ public class LibTest {
 			ac.stopAll();
 			buttons.clear();
 			images.clear();
-			createPlayer(200,200,30,300,100);
+			createPlayer(60,500,30,300,100);
 			Screen_state="Game";
-			loadMapFromPreload("l1r0");
+			loadMapFromPreload("l1r1");
 			createImage("scoreBox.png",0,0,">scoreBox");
 			GLtext temp = createText(""+SCORE,40,3,0);
 			temp.tag = ">SCORE";
@@ -697,14 +735,18 @@ public class LibTest {
 			}
 		}
 
-		for(GLenemy e : enemies)
+		if(enemies.size()>0)
 		{
-			e.render();
-			if(e!=null &&!e.alive)
+			for(GLenemy e : enemies)
 			{
-				torem.add(e);
+				e.render();
+				if(e!=null &&!e.alive)
+				{
+					torem.add(e);
+				}
 			}
 		}
+
 
 		//Tools.bp(SCORE);
 
@@ -735,7 +777,10 @@ public class LibTest {
 		}
 		if(PLAYER!=null)
 		{
-			PLAYER.render();
+			if(PLAYER.health>0)
+			{
+				PLAYER.render();
+			}
 		}
 
 	}

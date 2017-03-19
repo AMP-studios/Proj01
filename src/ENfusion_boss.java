@@ -17,16 +17,19 @@ public class ENfusion_boss extends GLenemy{
 	}
 	@Override
 	protected void act() throws IOException, AudioControllerException {
-		if(health<0)
-		{
-			LibTest.loadMapFromPreload("l2r1");
-		}
 		super.act();
 		if (timer.getTime()>700) {
 			LibTest.addEnemy(new ENFusionBossSpawn(String.format("%d,%d", (int) super.x, (int) super.y)));
 			timer.clear();
 			timer.start();
 		}
+	}
+
+	@Override
+	public void onDie() throws IOException, AudioControllerException
+	{
+		LibTest.loadInQuque=true;
+		LibTest.loadLevelName="l2r1";
 	}
 
 }
