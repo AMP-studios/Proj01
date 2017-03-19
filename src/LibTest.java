@@ -636,10 +636,7 @@ public class LibTest {
 			}
 		}
 
-		for(GLenemy t : trash)
-		{
-			toAdd.remove(t);
-		}
+		toAdd.removeAll(trash);
 
 		if(Screen_state.equals("Game"))
 		{
